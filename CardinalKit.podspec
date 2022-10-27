@@ -40,8 +40,8 @@ TODO: Add long description of the pod here.
   s.frameworks = 'UIKit', 'Foundation'
   
   #ResearchKit
-  # s.dependency 'ResearchKit', :git => 'https://github.com/ResearchKit/ResearchKit.git', :branch => 'master'
-  
+#   s.dependency 'ResearchKit', :git => 'https://github.com/ResearchKit/ResearchKit.git', :branch => 'master'
+   s.dependency 'Granola', :git => 'https://github.com/CardinalKit/Granola.git', :branch => 'main'
   #Securely storing key-value pairs on keychain
   s.dependency 'SAMKeychain',      '~> 1.5.2'
 
@@ -55,7 +55,7 @@ TODO: Add long description of the pod here.
 
   #Compressing files
   s.dependency 'Zip',              '~> 1.1.0'
-  s.dependency 'Granola', :git => 'https://github.com/CardinalKit/Granola.git', :branch => 'main'
+  
   s.dependency 'Firebase/Core'
   s.dependency 'Firebase/Firestore'
   s.dependency 'Firebase/Auth'
