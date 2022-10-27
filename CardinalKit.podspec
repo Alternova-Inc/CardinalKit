@@ -41,7 +41,7 @@ TODO: Add long description of the pod here.
   
   #ResearchKit
 #   s.dependency 'ResearchKit', :git => 'https://github.com/ResearchKit/ResearchKit.git', :branch => 'master'
-   s.dependency 'Granola', :git => 'https://github.com/CardinalKit/Granola.git', :branch => 'main'
+#   s.dependency 'Granola', :git => 'https://github.com/CardinalKit/Granola.git', :branch => 'main'
   #Securely storing key-value pairs on keychain
   s.dependency 'SAMKeychain',      '~> 1.5.2'
 
