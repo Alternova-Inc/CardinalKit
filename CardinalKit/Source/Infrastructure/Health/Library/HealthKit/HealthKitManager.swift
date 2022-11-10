@@ -86,15 +86,36 @@ extension HealthKitManager{
         }
     }
     
+    
+    
     private func setUpCollectionByDayBetweenDates(fromDate startDate:Date, toDate endDate:Date?, forTypes types:Set<HKSampleType>){
         var copyTypes = types
         let element = copyTypes.removeFirst()
         
-        collectDataDayByDay(forType: element, fromDate: startDate, toDate: endDate ?? Date()){ samples in
-            if(copyTypes.count>0){
-                self.setUpCollectionByDayBetweenDates(fromDate: startDate, toDate: endDate, forTypes: copyTypes)
-                copyTypes.removeAll()
+        getSources(forType: element, startDate: startDate){ [weak self] (sources) in
+            let dispatchGroup = DispatchGroup()
+            dispatchGroup.enter()
+
+        defer {
+           dispatchGroup.leave()
+        }
+        guard sources.count>0
+           else{
+           return
+        }
+        VLog("Got sources for type %@", sources.count)
+        for source in sources {
+           dispatchGroup.enter()
+           self?.collectDataDayByDay(forType: element, fromDate: startDate, toDate: endDate ?? Date(), source: source){ samples in
+               dispatchGroup.leave()
             }
+        }
+            dispatchGroup.notify(queue: .main, execute: {
+                if(copyTypes.count>0){
+                    self?.setUpCollectionByDayBetweenDates(fromDate: startDate, toDate: endDate, forTypes: copyTypes)
+                    copyTypes.removeAll()
+                }
+            })
         }
         
     }
@@ -108,10 +129,11 @@ extension HealthKitManager{
                 self.setUpBackgroundCollection(withFrequency: frequency, forTypes: copyTypes, onCompletion: onCompletion)
                 copyTypes.removeAll()
             }
-            self.collectData(forType: element, fromDate: nil, toDate: Date()){ samples in
-                print("Samples \(samples)")
-                // TODO: send Data
-            }
+            // TODO: Get Sources
+//            self.collectData(forType: element, fromDate: nil, toDate: Date()){ samples in
+//                print("Samples \(samples)")
+//                // TODO: send Data
+//            }
             completionHandler()
         })
         healthStore.execute(query)
@@ -125,60 +147,69 @@ extension HealthKitManager{
     
     
     
-    private func collectData(forType type:HKSampleType, fromDate startDate: Date? = nil, toDate endDate:Date, onCompletion:@escaping (([HKSample])->Void?)){
+    private func collectData(forType type:HKSampleType, fromDate startDate: Date? = nil, toDate endDate:Date, source:HKSource, onCompletion:@escaping (([HKSample])->Void)){
+        
+        let sourceRevision = HKSourceRevision(source: source, version: HKSourceRevisionAnyVersion)
+        // By default start day is 10 days ago
         var _startDate = Date().addingTimeInterval(-10)
         if let startDate = startDate {
+            // if startDate is define use
             _startDate = startDate
         }
-        
-        getSources(forType: type, startDate: _startDate){ [weak self] (sources) in
-            let dispatchGroup = DispatchGroup()
-            dispatchGroup.enter()
-            
-            defer {
-                dispatchGroup.leave()
+        else{
+            // else get last sync revision for source
+            _startDate = (self.getLastSyncDate(forType: type,forSource: sourceRevision))
+        }
+        // Collect data for specific source, and specific dates
+        self.queryHealthStore(forType: type, forSource: sourceRevision, fromDate: _startDate, toDate: endDate) { (query: HKSampleQuery, results: [HKSample]?, error: Error?) in
+            if let error = error {
+                VError("%@", error.localizedDescription)
             }
-            guard sources.count>0
-                else{
+            guard let results = results, !results.isEmpty else {
                 onCompletion([HKSample]())
                 return
             }
-            VLog("Got sources for type %@", sources.count, type.identifier)
-            for source in sources {
-                dispatchGroup.enter()
-                let sourceRevision = HKSourceRevision(source: source, version: HKSourceRevisionAnyVersion)
-                
-                if let startDate = startDate {
-                    _startDate = startDate
-                }
-                else{
-                    _startDate = (self?.getLastSyncDate(forType: type,forSource: sourceRevision))!
-                }
-                
-                self?.queryHealthStore(forType: type, forSource: sourceRevision, fromDate: _startDate, toDate: endDate) { (query: HKSampleQuery, results: [HKSample]?, error: Error?) in
-                    
-                    if let error = error {
-                        VError("%@", error.localizedDescription)
-                    }
-                    guard let results = results, !results.isEmpty else {
-                        onCompletion([HKSample]())
-                        
-                        return
-                    }
-                    
-                    self?.saveLastSyncDate(forType: type, forSource: sourceRevision, date: Date())
-                    CKApp.instance.infrastructure.onHealthDataColected(data: results)
-                    onCompletion(results)
-                }
-            }
+            self.saveLastSyncDate(forType: type, forSource: sourceRevision, date: Date())
+            CKApp.instance.infrastructure.onHealthDataColected(data: results)
+            onCompletion(results)
         }
+        
+//
+//        if let startDate = startDate {
+//            _startDate = startDate
+//        }
+        
+        
+//        getSources(forType: type, startDate: _startDate){ [weak self] (sources) in
+//            let dispatchGroup = DispatchGroup()
+//            dispatchGroup.enter()
+//
+//            defer {
+//                dispatchGroup.leave()
+//            }
+//            guard sources.count>0
+//                else{
+//                onCompletion([HKSample]())
+//                return
+//            }
+//            VLog("Got sources for type %@", sources.count, type.identifier)
+//            for source in sources {
+//                dispatchGroup.enter()
+//
+//            }
+//        }
     }
     
-    private func collectDataDayByDay(forType type:HKSampleType, fromDate startDate: Date, toDate endDate:Date, onCompletion:@escaping (([HKSample])->Void)){
-        collectData(forType: type, fromDate: startDate, toDate: startDate.dayByAdding(1)!, onCompletion: onCompletion)
-        let newStartDate = startDate.dayByAdding(1)!
-        if newStartDate < endDate{
-            collectDataDayByDay(forType: type, fromDate: newStartDate, toDate: endDate, onCompletion: onCompletion)
+    private func collectDataDayByDay(forType type:HKSampleType, fromDate startDate: Date, toDate endDate:Date,source:HKSource, onCompletion:@escaping (([HKSample])->Void)){
+        collectData(forType: type, fromDate: startDate, toDate: startDate.dayByAdding(1)!,source: source){
+            samples in
+            let newStartDate = startDate.dayByAdding(1)!
+            if newStartDate < endDate{
+                self.collectDataDayByDay(forType: type, fromDate: newStartDate, toDate: endDate,source: source, onCompletion: onCompletion)
+            }
+            else{
+                onCompletion(samples)
+            }
         }
     }
     
