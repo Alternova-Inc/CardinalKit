@@ -99,11 +99,8 @@ extension HealthKitManager{
         defer {
            dispatchGroup.leave()
         }
-        guard sources.count>0
-           else{
-           return
-        }
-        VLog("Got sources for type %@", sources.count)
+            
+        VLog("Got sources for type %@", sources.count, element.identifier)
         for source in sources {
            dispatchGroup.enter()
            self?.collectDataDayByDay(forType: element, fromDate: startDate, toDate: endDate ?? Date(), source: source){ samples in
@@ -129,11 +126,20 @@ extension HealthKitManager{
                 self.setUpBackgroundCollection(withFrequency: frequency, forTypes: copyTypes, onCompletion: onCompletion)
                 copyTypes.removeAll()
             }
-            // TODO: Get Sources
-//            self.collectData(forType: element, fromDate: nil, toDate: Date()){ samples in
-//                print("Samples \(samples)")
-//                // TODO: send Data
-//            }
+            let _startDate = Date().addingTimeInterval(-10)
+            self.getSources(forType: element, startDate: _startDate){ [weak self] (sources) in
+                let dispatchGroup = DispatchGroup()
+                dispatchGroup.enter()
+                defer {
+                   dispatchGroup.leave()
+                }
+                for source in sources {
+                   dispatchGroup.enter()
+                    self?.collectData(forType: element, fromDate: nil, toDate: Date(), source: source){ samples in
+                        dispatchGroup.leave()
+                    }
+                }
+            }
             completionHandler()
         })
         healthStore.execute(query)
@@ -173,31 +179,6 @@ extension HealthKitManager{
             CKApp.instance.infrastructure.onHealthDataColected(data: results)
             onCompletion(results)
         }
-        
-//
-//        if let startDate = startDate {
-//            _startDate = startDate
-//        }
-        
-        
-//        getSources(forType: type, startDate: _startDate){ [weak self] (sources) in
-//            let dispatchGroup = DispatchGroup()
-//            dispatchGroup.enter()
-//
-//            defer {
-//                dispatchGroup.leave()
-//            }
-//            guard sources.count>0
-//                else{
-//                onCompletion([HKSample]())
-//                return
-//            }
-//            VLog("Got sources for type %@", sources.count, type.identifier)
-//            for source in sources {
-//                dispatchGroup.enter()
-//
-//            }
-//        }
     }
     
     private func collectDataDayByDay(forType type:HKSampleType, fromDate startDate: Date, toDate endDate:Date,source:HKSource, onCompletion:@escaping (([HKSample])->Void)){
