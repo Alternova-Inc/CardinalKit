@@ -67,7 +67,6 @@ internal class Infrastructure {
             switch result{
                 case .success(let success):
                 if success {
-                    // TODO: Configure all types
                     self.healthKitManager.startCollectionByDayBetweenDate(fromDate: startDate, toDate: endDate)
                     self.healthKitManager.collectAndUploadClinicalTypes()
                 }
