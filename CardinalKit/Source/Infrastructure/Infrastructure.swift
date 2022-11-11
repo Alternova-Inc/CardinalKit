@@ -62,12 +62,12 @@ internal class Infrastructure {
     }
     
     // get data from healthkit on a specific date
-    func collectData(fromDate startDate:Date, toDate endDate: Date){
+    func collectData(fromDate startDate:Date, toDate endDate: Date, completion: @escaping () -> Void){
         healthPermissionProvider.getAllPermissions(){ result in
             switch result{
                 case .success(let success):
                 if success {
-                    self.healthKitManager.startCollectionByDayBetweenDate(fromDate: startDate, toDate: endDate)
+                    self.healthKitManager.startCollectionByDayBetweenDate(fromDate: startDate, toDate: endDate, completion: completion)
                     self.healthKitManager.collectAndUploadClinicalTypes()
                 }
                 case .failure(let error):

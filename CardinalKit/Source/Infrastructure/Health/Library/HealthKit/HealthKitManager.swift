@@ -57,8 +57,8 @@ public class HealthKitManager{
         - Parameter startDate: initial date
         - Parameter endDate: final date
      */
-    func startCollectionByDayBetweenDate(fromDate startDate:Date, toDate endDate:Date?){
-        self.setUpCollectionByDayBetweenDates(fromDate: startDate, toDate: endDate, forTypes: types)
+    func startCollectionByDayBetweenDate(fromDate startDate:Date, toDate endDate:Date?, completion: @escaping () -> Void){
+        self.setUpCollectionByDayBetweenDates(fromDate: startDate, toDate: endDate, forTypes: types, completion: completion)
     }
     
     /**
@@ -88,7 +88,7 @@ extension HealthKitManager{
     
     
     
-    private func setUpCollectionByDayBetweenDates(fromDate startDate:Date, toDate endDate:Date?, forTypes types:Set<HKSampleType>){
+    private func setUpCollectionByDayBetweenDates(fromDate startDate:Date, toDate endDate:Date?, forTypes types:Set<HKSampleType>, completion: @escaping () -> Void){
         var copyTypes = types
         let element = copyTypes.removeFirst()
         
@@ -109,8 +109,11 @@ extension HealthKitManager{
         }
             dispatchGroup.notify(queue: .main, execute: {
                 if(copyTypes.count>0){
-                    self?.setUpCollectionByDayBetweenDates(fromDate: startDate, toDate: endDate, forTypes: copyTypes)
+                    self?.setUpCollectionByDayBetweenDates(fromDate: startDate, toDate: endDate, forTypes: copyTypes, completion: completion)
                     copyTypes.removeAll()
+                }
+                else{
+                    completion()
                 }
             })
         }

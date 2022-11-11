@@ -214,8 +214,8 @@ extension CKApp{
     /**
      collect data between two specific dates
      */
-    class public func collectData(fromDate startDate:Date, toDate endDate: Date){
-        instance.infrastructure.collectData(fromDate: startDate, toDate: endDate)
+    class public func collectData(fromDate startDate:Date, toDate endDate: Date, completion: @escaping () -> Void){
+        instance.infrastructure.collectData(fromDate: startDate, toDate: endDate, completion: completion)
     }
     
     /**
