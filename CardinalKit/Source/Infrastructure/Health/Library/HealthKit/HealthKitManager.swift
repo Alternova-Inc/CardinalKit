@@ -129,7 +129,7 @@ extension HealthKitManager{
                 self.setUpBackgroundCollection(withFrequency: frequency, forTypes: copyTypes, onCompletion: onCompletion)
                 copyTypes.removeAll()
             }
-            let _startDate = Date().addingTimeInterval(-10)
+            let _startDate = Date().dayByAdding(-10)!
             self.getSources(forType: element, startDate: _startDate){ [weak self] (sources) in
                 let dispatchGroup = DispatchGroup()
                 dispatchGroup.enter()
@@ -160,7 +160,7 @@ extension HealthKitManager{
         
         let sourceRevision = HKSourceRevision(source: source, version: HKSourceRevisionAnyVersion)
         // By default start day is 10 days ago
-        var _startDate = Date().addingTimeInterval(-10)
+        var _startDate = Date().dayByAdding(-10)!
         if let startDate = startDate {
             // if startDate is define use
             _startDate = startDate
