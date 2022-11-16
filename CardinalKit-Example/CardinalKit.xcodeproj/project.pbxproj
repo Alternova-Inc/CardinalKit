@@ -10,7 +10,7 @@
 		2B19DD9226FE1BEB00649CE1 /* JsonToSurvey.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2B19DD9126FE1BEB00649CE1 /* JsonToSurvey.swift */; };
 		2B8FB80427552B02000B2D7B /* CKMultipleSignInStep.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2B8FB80327552B02000B2D7B /* CKMultipleSignInStep.swift */; };
 		2B932F84276BF8D300AB3A02 /* CKReviewConsentDocument.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2B932F83276BF8D300AB3A02 /* CKReviewConsentDocument.swift */; };
-		2BF6451826C1D0040020C206 /* (null) in Sources */ = {isa = PBXBuildFile; };
+		2BF6451826C1D0040020C206 /* BuildFile in Sources */ = {isa = PBXBuildFile; };
 		2BF6452026C1DBE70020C206 /* CK_ORKSerialization.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2BF6451F26C1DBE70020C206 /* CK_ORKSerialization.swift */; };
 		2E02B7ECEB2186F8E5868D90 /* Pods_CardinalKit_Example.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 2D9CCFBC6701FC7A8C18DE19 /* Pods_CardinalKit_Example.framework */; };
 		2F94C5F22536543600DF8866 /* SceneDelegate+CardinalKit.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2F94C5F12536543600DF8866 /* SceneDelegate+CardinalKit.swift */; };
@@ -85,7 +85,7 @@
 		8EA664AD2593380D00B6A45A /* SendRecordsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8EA664AC2593380D00B6A45A /* SendRecordsView.swift */; };
 		8EA664B42594387900B6A45A /* Errors.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8EA664B32594387900B6A45A /* Errors.swift */; };
 		8EBE6F9C24B3C0E60093D07C /* AppDelegate+CardinalKit.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8EBE6F9B24B3C0E60093D07C /* AppDelegate+CardinalKit.swift */; };
-		D253D132250D1BDB00A363E4 /* (null) in Sources */ = {isa = PBXBuildFile; };
+		D253D132250D1BDB00A363E4 /* BuildFile in Sources */ = {isa = PBXBuildFile; };
 		E235077724F7082700CC1899 /* SceneDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = E235077624F7082700CC1899 /* SceneDelegate.swift */; };
 		E2680B1B260A72DD00B755EA /* LoginExistingUserViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = E2680B1A260A72DD00B755EA /* LoginExistingUserViewController.swift */; };
 		E290FB1D24FF4BBA00D19BE9 /* GoogleService-Info.plist in Resources */ = {isa = PBXBuildFile; fileRef = E290FB1C24FF4BBA00D19BE9 /* GoogleService-Info.plist */; };
@@ -750,16 +750,18 @@
 				"${PODS_ROOT}/Target Support Files/Pods-CardinalKit_Example/Pods-CardinalKit_Example-frameworks.sh",
 				"${BUILT_PRODUCTS_DIR}/AppAuth/AppAuth.framework",
 				"${BUILT_PRODUCTS_DIR}/BoringSSL-GRPC/openssl_grpc.framework",
+				"${BUILT_PRODUCTS_DIR}/FirebaseAppCheckInterop/FirebaseAppCheckInterop.framework",
 				"${BUILT_PRODUCTS_DIR}/FirebaseAuth/FirebaseAuth.framework",
+				"${BUILT_PRODUCTS_DIR}/FirebaseAuthInterop/FirebaseAuthInterop.framework",
 				"${BUILT_PRODUCTS_DIR}/FirebaseCore/FirebaseCore.framework",
-				"${BUILT_PRODUCTS_DIR}/FirebaseCoreDiagnostics/FirebaseCoreDiagnostics.framework",
+				"${BUILT_PRODUCTS_DIR}/FirebaseCoreExtension/FirebaseCoreExtension.framework",
+				"${BUILT_PRODUCTS_DIR}/FirebaseCoreInternal/FirebaseCoreInternal.framework",
 				"${BUILT_PRODUCTS_DIR}/FirebaseDynamicLinks/FirebaseDynamicLinks.framework",
 				"${BUILT_PRODUCTS_DIR}/FirebaseFirestore/FirebaseFirestore.framework",
 				"${BUILT_PRODUCTS_DIR}/FirebaseInstallations/FirebaseInstallations.framework",
 				"${BUILT_PRODUCTS_DIR}/FirebaseStorage/FirebaseStorage.framework",
 				"${BUILT_PRODUCTS_DIR}/GTMAppAuth/GTMAppAuth.framework",
 				"${BUILT_PRODUCTS_DIR}/GTMSessionFetcher/GTMSessionFetcher.framework",
-				"${BUILT_PRODUCTS_DIR}/GoogleDataTransport/GoogleDataTransport.framework",
 				"${BUILT_PRODUCTS_DIR}/GoogleSignIn/GoogleSignIn.framework",
 				"${BUILT_PRODUCTS_DIR}/GoogleUtilities/GoogleUtilities.framework",
 				"${BUILT_PRODUCTS_DIR}/GranolaAlternova/GranolaAlternova.framework",
@@ -789,16 +791,18 @@
 			outputPaths = (
 				"${TARGET_BUILD_DIR}/${FRAMEWORKS_FOLDER_PATH}/AppAuth.framework",
 				"${TARGET_BUILD_DIR}/${FRAMEWORKS_FOLDER_PATH}/openssl_grpc.framework",
+				"${TARGET_BUILD_DIR}/${FRAMEWORKS_FOLDER_PATH}/FirebaseAppCheckInterop.framework",
 				"${TARGET_BUILD_DIR}/${FRAMEWORKS_FOLDER_PATH}/FirebaseAuth.framework",
+				"${TARGET_BUILD_DIR}/${FRAMEWORKS_FOLDER_PATH}/FirebaseAuthInterop.framework",
 				"${TARGET_BUILD_DIR}/${FRAMEWORKS_FOLDER_PATH}/FirebaseCore.framework",
-				"${TARGET_BUILD_DIR}/${FRAMEWORKS_FOLDER_PATH}/FirebaseCoreDiagnostics.framework",
+				"${TARGET_BUILD_DIR}/${FRAMEWORKS_FOLDER_PATH}/FirebaseCoreExtension.framework",
+				"${TARGET_BUILD_DIR}/${FRAMEWORKS_FOLDER_PATH}/FirebaseCoreInternal.framework",
 				"${TARGET_BUILD_DIR}/${FRAMEWORKS_FOLDER_PATH}/FirebaseDynamicLinks.framework",
 				"${TARGET_BUILD_DIR}/${FRAMEWORKS_FOLDER_PATH}/FirebaseFirestore.framework",
 				"${TARGET_BUILD_DIR}/${FRAMEWORKS_FOLDER_PATH}/FirebaseInstallations.framework",
 				"${TARGET_BUILD_DIR}/${FRAMEWORKS_FOLDER_PATH}/FirebaseStorage.framework",
 				"${TARGET_BUILD_DIR}/${FRAMEWORKS_FOLDER_PATH}/GTMAppAuth.framework",
 				"${TARGET_BUILD_DIR}/${FRAMEWORKS_FOLDER_PATH}/GTMSessionFetcher.framework",
-				"${TARGET_BUILD_DIR}/${FRAMEWORKS_FOLDER_PATH}/GoogleDataTransport.framework",
 				"${TARGET_BUILD_DIR}/${FRAMEWORKS_FOLDER_PATH}/GoogleSignIn.framework",
 				"${TARGET_BUILD_DIR}/${FRAMEWORKS_FOLDER_PATH}/GoogleUtilities.framework",
 				"${TARGET_BUILD_DIR}/${FRAMEWORKS_FOLDER_PATH}/GranolaAlternova.framework",
@@ -879,7 +883,7 @@
 				63F8E3F72866527E00F260AE /* OnBoardingPresenter.swift in Sources */,
 				8E7FFFBB25DE37FF002982B4 /* CoffeePieChartView.swift in Sources */,
 				8E7FFFB825DE350A002982B4 /* CoffeeUIView.swift in Sources */,
-				2BF6451826C1D0040020C206 /* (null) in Sources */,
+				2BF6451826C1D0040020C206 /* BuildFile in Sources */,
 				2B19DD9226FE1BEB00649CE1 /* JsonToSurvey.swift in Sources */,
 				8E6E1E2C253539AE0024B8DF /* ChangePasscodeView.swift in Sources */,
 				8E0A43AD244A4A0400656518 /* Constants.swift in Sources */,
@@ -890,7 +894,7 @@
 				8E9CDEB6259181B400C8A228 /* CareTeamViewControllerRepresentable.swift in Sources */,
 				8E9CDEAF259172C200C8A228 /* CKCareKitManager+Sample.swift in Sources */,
 				8E9CDEA925916E6600C8A228 /* ScheduleViewController.swift in Sources */,
-				D253D132250D1BDB00A363E4 /* (null) in Sources */,
+				D253D132250D1BDB00A363E4 /* BuildFile in Sources */,
 				8E0A43AC244A4A0400656518 /* CKStudyUser.swift in Sources */,
 				8E9CDEB22591739A00C8A228 /* TipView.swift in Sources */,
 				632ED497286BB649009C3543 /* User.swift in Sources */,
