@@ -91,7 +91,7 @@ internal class Infrastructure {
     }
     
     // function called when new data is received from healthkit
-    func onHealthDataColected(data:[HKSample]){
+    func onHealthDataColected(data:[HKSample], onCompletion:@escaping ()->Void){
         do{
             // Transfom Data in OPENMHealth Format
             let samplesArray:[[String: Any]] = try mhSerializer.json(for: data)
@@ -104,7 +104,7 @@ internal class Infrastructure {
                 }
                 
                 let sampleToData = try JSONSerialization.data(withJSONObject: sample, options: [])
-                CreateAndPerformPackage(type: .hkdata, data: sampleToData, identifier: identifier)
+                CreateAndPerformPackage(type: .hkdata, data: sampleToData, identifier: identifier, onCompletion: onCompletion)
             }
         }
         catch{
@@ -113,12 +113,12 @@ internal class Infrastructure {
     }
     
     // function called when a new clinical data is received
-    func onClinicalDataCollected(data: [HKClinicalRecord]){
+    func onClinicalDataCollected(data: [HKClinicalRecord], onCompletion:@escaping ()->Void){
         for sample in data {
             guard let resource = sample.fhirResource else { continue }
             let data = resource.data
             let identifier = resource.resourceType.rawValue + "-" + resource.identifier
-            CreateAndPerformPackage(type: .clinicalData, data: data, identifier: identifier)
+            CreateAndPerformPackage(type: .clinicalData, data: data, identifier: identifier, onCompletion: onCompletion)
             
         }
     }
@@ -136,12 +136,14 @@ internal class Infrastructure {
      - Parameter data: the data to send
      - Parameter identifier: unique package identifier
      */
-    private func CreateAndPerformPackage(type: PackageType, data:Data, identifier: String){
+    private func CreateAndPerformPackage(type: PackageType, data:Data, identifier: String,  onCompletion:@escaping ()->Void){
         do{
             let packageName = identifier
             let package = try Package(packageName, type: type, identifier: packageName, data: data)
             let networkObject = NetworkRequestObject.findOrCreateNetworkRequest(package)
-            try networkObject.perform()
+            try networkObject.perform(){ complete, Error in
+                onCompletion()
+            }
         }
         catch{
             print("[upload] ERROR " + error.localizedDescription)

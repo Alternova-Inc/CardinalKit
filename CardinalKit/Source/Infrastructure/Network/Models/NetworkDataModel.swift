@@ -108,6 +108,7 @@ public class NetworkRequestObject{
 extension NetworkRequestObject {
     func perform(onCompletion: ((Bool, Error?) -> Void)? = nil) throws {
         guard shouldPerform() else{
+            onCompletion?(false, nil)
             return
         }
         

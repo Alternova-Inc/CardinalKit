@@ -33,7 +33,7 @@ struct SendRecordsView: View {
         if let recordsLastUploaded = lastSentDate {
             lastDate = recordsLastUploaded
         }
-        CKApp.collectData(fromDate: lastDate, toDate: Date())
+        CKApp.collectData(fromDate: lastDate, toDate: Date()){}
         lastSentDate = Date()
         UserDefaults.standard.set(Date(), forKey: Constants.prefHealthRecordsLastUploaded)
     }

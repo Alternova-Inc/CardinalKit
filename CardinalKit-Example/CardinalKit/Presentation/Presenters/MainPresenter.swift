@@ -14,7 +14,7 @@ class MainPresenter: ObservableObject {
     @Published var carekitLoaded:Bool = false
     
     init(){
-        CKApp.collectData(fromDate: Date().dayByAdding(-10)!, toDate: Date())
+        CKApp.collectData(fromDate: Date().dayByAdding(-10)!, toDate: Date()){}
         
         let config = CKConfig.shared
         self.useCarekit = config.readBool(query: "Use CareKit")

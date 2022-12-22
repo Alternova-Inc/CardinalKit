@@ -80,7 +80,7 @@ extension HealthKitManager{
                     print("*** An error occurred: \(error?.localizedDescription ?? "nil") ***")
                     return
                 }
-                CKApp.instance.infrastructure.onClinicalDataCollected(data: samples)
+                CKApp.instance.infrastructure.onClinicalDataCollected(data: samples){}
             }
             healthStore.execute(query)
         }
@@ -92,24 +92,25 @@ extension HealthKitManager{
         var copyTypes = types
         let element = copyTypes.removeFirst()
         
-        getSources(forType: element, startDate: startDate){ [weak self] (sources) in
+        getSources(forType: element, startDate: startDate){(sources) in
             let dispatchGroup = DispatchGroup()
             dispatchGroup.enter()
 
-        defer {
-           dispatchGroup.leave()
-        }
-            
-        VLog("Got sources for type %@", sources.count, element.identifier)
-        for source in sources {
-           dispatchGroup.enter()
-           self?.collectDataDayByDay(forType: element, fromDate: startDate, toDate: endDate ?? Date(), source: source){ samples in
+            defer {
                dispatchGroup.leave()
             }
-        }
+                
+            VLog("Got sources for type %@", sources.count, element.identifier)
+            for source in sources {
+               dispatchGroup.enter()
+                print("__Call Collection \(element.identifier)")
+               self.collectDataDayByDay(forType: element, fromDate: startDate, toDate: endDate ?? Date(), source: source){ samples in
+                   dispatchGroup.leave()
+                }
+            }
             dispatchGroup.notify(queue: .main, execute: {
                 if(copyTypes.count>0){
-                    self?.setUpCollectionByDayBetweenDates(fromDate: startDate, toDate: endDate, forTypes: copyTypes, completion: completion)
+                    self.setUpCollectionByDayBetweenDates(fromDate: startDate, toDate: endDate, forTypes: copyTypes, completion: completion)
                     copyTypes.removeAll()
                 }
                 else{
@@ -130,7 +131,7 @@ extension HealthKitManager{
                 copyTypes.removeAll()
             }
             let _startDate = Date().dayByAdding(-10)!
-            self.getSources(forType: element, startDate: _startDate){ [weak self] (sources) in
+            self.getSources(forType: element, startDate: _startDate){ (sources) in
                 let dispatchGroup = DispatchGroup()
                 dispatchGroup.enter()
                 defer {
@@ -138,7 +139,7 @@ extension HealthKitManager{
                 }
                 for source in sources {
                    dispatchGroup.enter()
-                    self?.collectData(forType: element, fromDate: nil, toDate: Date(), source: source){ samples in
+                    self.collectData(forType: element, fromDate: nil, toDate: Date(), source: source){ samples in
                         dispatchGroup.leave()
                     }
                 }
@@ -157,7 +158,7 @@ extension HealthKitManager{
     
     
     private func collectData(forType type:HKSampleType, fromDate startDate: Date? = nil, toDate endDate:Date, source:HKSource, onCompletion:@escaping (([HKSample])->Void)){
-        
+        print("Collecting type \(type.identifier)")
         let sourceRevision = HKSourceRevision(source: source, version: HKSourceRevisionAnyVersion)
         // By default start day is 10 days ago
         var _startDate = Date().dayByAdding(-10)!
@@ -169,18 +170,26 @@ extension HealthKitManager{
             // else get last sync revision for source
             _startDate = (self.getLastSyncDate(forType: type,forSource: sourceRevision))
         }
+        var variable1 = false
         // Collect data for specific source, and specific dates
         self.queryHealthStore(forType: type, forSource: sourceRevision, fromDate: _startDate, toDate: endDate) { (query: HKSampleQuery, results: [HKSample]?, error: Error?) in
             if let error = error {
                 VError("%@", error.localizedDescription)
             }
             guard let results = results, !results.isEmpty else {
+                print("complete register no data type \(type.identifier)")
                 onCompletion([HKSample]())
                 return
             }
             self.saveLastSyncDate(forType: type, forSource: sourceRevision, date: Date())
-            CKApp.instance.infrastructure.onHealthDataColected(data: results)
-            onCompletion(results)
+            CKApp.instance.infrastructure.onHealthDataColected(data: results){
+                print("complete register of type \(type.identifier)")
+                print("complete register of type \(variable1)")
+                if(!variable1){
+                    onCompletion(results)
+                    variable1 = true
+                }
+            }
         }
     }
     
@@ -192,6 +201,7 @@ extension HealthKitManager{
                 self.collectDataDayByDay(forType: type, fromDate: newStartDate, toDate: endDate,source: source, onCompletion: onCompletion)
             }
             else{
+                print("call completion \(type.identifier)")
                 onCompletion(samples)
             }
         }
