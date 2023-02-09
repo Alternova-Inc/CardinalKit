@@ -211,7 +211,6 @@ extension CKApp{
         instance.infrastructure.startBackgroundDeliveryData()
     }
     
-    //MARK: add to cardinal kit
     /**
      start background data collection
      */

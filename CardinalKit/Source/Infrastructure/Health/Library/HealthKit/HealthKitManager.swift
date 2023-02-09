@@ -31,8 +31,6 @@ public class HealthKitManager{
         self.clinicalTypes = clinicalTypes
     }
     
-    //MARK: Add to cardinal kit
-    
     /**
      start healthkit data collection in the background
      - Parameter frequency: frequency with which the data will be collected
@@ -103,7 +101,6 @@ extension HealthKitManager{
         }
     }
     
-    //MARK: Add to cardinalkit - Make iteration for each type
     private func setUpCollectionBetweenDatesWithStatisticCollection(fromDate startDate:Date, toDate endDate:Date?, forTypes types:Set<HKSampleType>, completion: @escaping () -> Void){
         let sem = DispatchSemaphore.init(value: types.count)
         for type in types {
@@ -181,42 +178,26 @@ extension HealthKitManager{
         })
     }
     
-    //TODO: Make background collectada with statistics
-    
     private func setUpBackgroundCollectionWithStatisticCollection(withFrequency frequency:HKUpdateFrequency, forTypes types:Set<HKSampleType>, onCompletion:((_ success: Bool, _ error: Error?) -> Void)? = nil){
-        var copyTypes = types
-        let element = copyTypes.removeFirst()
-        let query = HKObserverQuery(sampleType: element, predicate: nil, updateHandler: {
-            (query, completionHandler, error) in
-            if(copyTypes.count>0){
-                self.setUpBackgroundCollection(withFrequency: frequency, forTypes: copyTypes, onCompletion: onCompletion)
-                copyTypes.removeAll()
-            }
-            let _startDate = Date().dayByAdding(-10)!
-            self.getSources(forType: element, startDate: _startDate){ (sources) in
-                let dispatchGroup = DispatchGroup()
-                dispatchGroup.enter()
-                defer {
-                    dispatchGroup.leave()
+        
+        for type in types{
+            let query = HKObserverQuery(sampleType: type, predicate: nil, updateHandler: {
+                (query, completionHandler, error) in
+                
+                self.collectData(forType: type, toDate: Date()){
                 }
-                for source in sources {
-                    dispatchGroup.enter()
-                    self.collectData(forType: element, fromDate: nil, toDate: Date(), source: source){ samples in
-                        dispatchGroup.leave()
-                    }
+                
+                completionHandler()
+            })
+            healthStore.execute(query)
+            healthStore.enableBackgroundDelivery(for: type, frequency: frequency, withCompletion: { (success, error) in
+                if let error = error {
+                    VError("%@", error.localizedDescription)
                 }
-            }
-            completionHandler()
-        })
-        healthStore.execute(query)
-        healthStore.enableBackgroundDelivery(for: element, frequency: frequency, withCompletion: { (success, error) in
-            if let error = error {
-                VError("%@", error.localizedDescription)
-            }
-            onCompletion?(success,error)
-        })
+                onCompletion?(success,error)
+            })
+        }
     }
-    
     
     private func collectData(forType type:HKSampleType, fromDate startDate: Date? = nil, toDate endDate:Date, source:HKSource, onCompletion:@escaping (([HKSample])->Void)){
         print("Collecting type \(type.identifier)")
@@ -255,30 +236,39 @@ extension HealthKitManager{
         }
     }
     
-    //MARK: Add to cardinalkit
     private func collectData(forType type:HKSampleType, fromDate startDate: Date? = nil, toDate endDate:Date, onCompletion:@escaping ()->Void ){
         
         let quantityType = HKQuantityTypeIdentifier(rawValue: type.identifier)
         
-        queryStatisticCollectionHealthStore(forType: quantityType, fromDate: startDate!){
+        var _startDate = Date().dayByAdding(-10)!
+        if let startDate = startDate {
+            // if startDate is define use
+            _startDate = startDate
+        }
+        else{
+            // else get last sync revision for source
+            _startDate = (self.getLastSyncDate(forType: type))
+            print("Last Sync Date for \(type.description) date: \(_startDate)")
+        }
+        
+        queryStatisticCollectionHealthStore(forType: quantityType, fromDate: _startDate){
             collectionQuery, results, error in
             
             let sampleType = HKSampleType.quantityType(forIdentifier: quantityType)!
             
-            self.convertStatisticsToHKSamples(statisticsCollection: results!, quantityType: sampleType,fromDate: startDate!, toDate: endDate){
+            self.convertStatisticsToHKSamples(statisticsCollection: results!, quantityType: sampleType,fromDate: _startDate, toDate: endDate){
                 results in
+                self.saveLastSyncDate(forType: type, date: Date())
                 if results.count > 0 {
-                    CKApp.instance.infrastructure.onHealthStatisticsDataColected(data: results){
-                        //print("complete statistic collection ")
+                    CKApp.instance.infrastructure.onHealthStatisticsDataColected(data: results, isStatisticCollection: true){
+                        print("complete statistic collection ")
                         onCompletion()
                     }
                 }
                 else{
                     onCompletion()
                 }
-                
             }
-            
         }
     }
     
@@ -348,11 +338,9 @@ extension HealthKitManager{
         healthStore.execute(query)
     }
     
-    //MARK: Make query to statistics - Copy to cardinal kit
     fileprivate func queryStatisticCollectionHealthStore(forType type: HKQuantityTypeIdentifier, fromDate startDate: Date, queryHandler: @escaping (HKStatisticsCollectionQuery, HKStatisticsCollection?, Error?) -> Void ){
         
         let quantityType = HKQuantityType.quantityType(forIdentifier: type)!
-        
         var options: HKStatisticsOptions = [.cumulativeSum]
         
         if(quantityType.aggregationStyle == .discreteArithmetic){
@@ -363,26 +351,34 @@ extension HealthKitManager{
         
         
         statisticsCollectionQuery.initialResultsHandler = { query, results, error in
-            
             queryHandler(query,results,error)
         }
         
         healthStore.execute(statisticsCollectionQuery)
     }
     
-    private func saveLastSyncDate(forType type: HKSampleType, forSource sourceRevision: HKSourceRevision, date:Date){
+    private func saveLastSyncDate(forType type: HKSampleType, forSource sourceRevision: HKSourceRevision? = nil, date:Date){
+        var _device = ""
+        if let sourceRevision = sourceRevision{
+            _device = getSourceRevisionKey(source: sourceRevision)
+        }
+        
         let lastSyncObject =
         DateLastSyncObject(
             dataType: "\(type.identifier)",
             lastSyncDate: date,
-            device: "\(getSourceRevisionKey(source: sourceRevision))"
+            device: "\(_device)"
         )
         CKApp.instance.options.localDBDelegate?.saveLastSyncItem(item: lastSyncObject)
     }
     
-    private func getLastSyncDate(forType type: HKSampleType, forSource sourceRevision: HKSourceRevision) -> Date
-    {
-        if let result = CKApp.instance.options.localDBDelegate?.getLastSyncItem(dataType: "\(type.identifier)", device: "\(getSourceRevisionKey(source: sourceRevision))"){
+    private func getLastSyncDate(forType type: HKSampleType, forSource sourceRevision: HKSourceRevision? = nil) -> Date{
+        var _device = ""
+        if let sourceRevision = sourceRevision{
+            _device = getSourceRevisionKey(source: sourceRevision)
+        }
+        
+        if let result = CKApp.instance.options.localDBDelegate?.getLastSyncItem(dataType: "\(type.identifier)", device: "\(_device)"){
             return result.lastSyncDate
         }
         return Date().dayByAdding(-1)!
