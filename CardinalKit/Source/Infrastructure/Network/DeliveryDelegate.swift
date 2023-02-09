@@ -67,14 +67,17 @@ extension CKDelivery: CKDeliveryDelegate{
     
     public func send(file: URL, package: Package, onCompletion: @escaping (Bool) -> Void) {
         switch package.type {
-            case .hkdata:
-                sendHealthKit(file, package, onCompletion)
-                break
-            case .metricsData:
-                sendMetricsData(file, package, onCompletion)
-                break;
-            case .clinicalData:
-                sendClinicalData(file, package, onCompletion)
+        case .hkdata:
+            sendHealthKit(file, package, onCompletion)
+            break
+        case .metricsData:
+            sendMetricsData(file, package, onCompletion)
+            break;
+        case .clinicalData:
+            sendClinicalData(file, package, onCompletion)
+        case .khdataStatistics:
+            sendHealthKitStatistics(file, package, onCompletion)
+            break;
         }
     }
     
@@ -95,7 +98,20 @@ extension CKDelivery{
             let trimmedIdentifier = identifier.trimmingCharacters(in: .whitespaces)
             firebaseManager.send(file: file, package: package, authPath: authPath +
                                  "\(userDataDelegate.dataBucketHealthKit)",identifier: trimmedIdentifier, onCompletion: onCompletion)
-            }
+        }
+        else{
+            onCompletion(false)
+        }
+        
+    }
+    private func sendHealthKitStatistics(_ file: URL,_ package: Package, _ onCompletion: @escaping (Bool) -> Void) {
+        if let userDataDelegate = CKApp.instance.options.userDataProviderDelegate,
+           let authPath =   userDataDelegate.authCollection{
+            let identifier = "\(package.fileName)"
+            let trimmedIdentifier = identifier.trimmingCharacters(in: .whitespaces)
+            firebaseManager.send(file: file, package: package, authPath: authPath +
+                                 "\(userDataDelegate.dataBucketHealthKitStatistics)",identifier: trimmedIdentifier, onCompletion: onCompletion)
+        }
         else{
             onCompletion(false)
         }
@@ -104,10 +120,10 @@ extension CKDelivery{
     private func sendClinicalData(_ file: URL,_ package: Package, _ onCompletion: @escaping (Bool) -> Void) {
         if let userDataDelegate = CKApp.instance.options.userDataProviderDelegate,
            let authPath =   userDataDelegate.authCollection{
-                let identifier = Date().startOfDay.shortStringFromDate() + "-\(package.fileName)"
-                let trimmedIdentifier = identifier.trimmingCharacters(in: .whitespaces)
+            let identifier = Date().startOfDay.shortStringFromDate() + "-\(package.fileName)"
+            let trimmedIdentifier = identifier.trimmingCharacters(in: .whitespaces)
             firebaseManager.send(file: file, package: package, authPath: authPath + "\(userDataDelegate.dataBucketClinicalRecords)",identifier: trimmedIdentifier, onCompletion: onCompletion)
-            }
+        }
         else{
             onCompletion(false)
         }

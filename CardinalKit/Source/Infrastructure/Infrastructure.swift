@@ -6,6 +6,7 @@
 //
 
 import Foundation
+import CommonCrypto
 
 
 // Infrastructure layer of DDD architecture
@@ -39,12 +40,12 @@ internal class Infrastructure {
     
     // Prompt user for healthkit permissions
     func getHealthPermission(completion: @escaping (Result<Bool, Error>) -> Void){
-       healthPermissionProvider.getHealthPermissions(completion: completion)
+        healthPermissionProvider.getHealthPermissions(completion: completion)
     }
     
     // Ask the user for clinical permissions
     func getClinicalPermission(completion: @escaping (Result<Bool, Error>) -> Void){
-       healthPermissionProvider.getRecordsPermissions(completion: completion)
+        healthPermissionProvider.getRecordsPermissions(completion: completion)
     }
     
     // start healthkit data collection in the background
@@ -53,7 +54,7 @@ internal class Infrastructure {
             switch result{
                 case .success(let success):
                 if success {
-                    self.healthKitManager.startHealthKitCollectionInBackground(withFrequency: "")
+                    self.healthKitManager.startHealthKitCollectionInBackground(withFrequency: "", withStatistics: false)
                 }
                 case .failure(let error):
                  print("error \(error)")
@@ -65,13 +66,27 @@ internal class Infrastructure {
     func collectData(fromDate startDate:Date, toDate endDate: Date, completion: @escaping () -> Void){
         healthPermissionProvider.getAllPermissions(){ result in
             switch result{
-                case .success(let success):
+            case .success(let success):
                 if success {
                     self.healthKitManager.startCollectionByDayBetweenDate(fromDate: startDate, toDate: endDate, completion: completion)
                     self.healthKitManager.collectAndUploadClinicalTypes()
                 }
-                case .failure(let error):
-                 print("error \(error)")
+            case .failure(let error):
+                print("error \(error)")
+            }
+        }
+    }
+    
+    //Get Data from healhkit on a specific date using StatistiCollection
+    func collectDataWithStatisticCollection(fromDate startDate:Date, toDate endDate: Date, completion: @escaping () -> Void){
+        healthPermissionProvider.getAllPermissions(){ result in
+            switch result{
+            case .success(let success):
+                if success {
+                    self.healthKitManager.starCollectionBetweenDate(fromDate: startDate, toDate: endDate, completion: completion)
+                }
+            case .failure(let error):
+                print("error \(error)")
             }
         }
     }
@@ -80,12 +95,12 @@ internal class Infrastructure {
     func collectClinicalData(){
         healthPermissionProvider.getAllPermissions(){ result in
             switch result{
-                case .success(let success):
+            case .success(let success):
                 if success {
                     self.healthKitManager.collectAndUploadClinicalTypes()
                 }
-                case .failure(let error):
-                 print("error \(error)")
+            case .failure(let error):
+                print("error \(error)")
             }
         }
     }
@@ -96,7 +111,7 @@ internal class Infrastructure {
             // Transfom Data in OPENMHealth Format
             let samplesArray:[[String: Any]] = try mhSerializer.json(for: data)
             for sample in samplesArray{
-               
+                
                 var identifier = "HKData"
                 if let header = sample["header"] as? [String:Any],
                    let id = header["id"] as? String{
@@ -110,6 +125,47 @@ internal class Infrastructure {
         catch{
             print("Error Transform Data: \(error)")
         }
+    }
+    
+    // function called when new data is received from healthkit
+    func onHealthStatisticsDataColected(data:[HKSample], onCompletion:@escaping ()->Void){
+        do{
+            // Transfom Data in OPENMHealth Format
+            let samplesArray:[[String: Any]] = try mhSerializer.json(for: data)
+            for sample in samplesArray{
+                
+                var identifier = "HKDataStatistics"
+                
+                if let body = sample["body"] as? [String:Any],
+                   let timeframe = body["effective_time_frame"] as? [String:Any],
+                   let timeInterval = timeframe["time_interval"] as? [String:Any],
+                   let startDate = timeInterval["start_date_time"] as? String,
+                   let quantity = body["quantity_type"] as? String{
+                    let combine = quantity + startDate
+                    let hash = md5(data: combine.data(using: .utf8)!)
+                    
+                    identifier = hash
+                }
+                
+                if let header:NSMutableDictionary = sample["header"] as? NSMutableDictionary{
+                    header["id"] = identifier
+                }
+                
+                let sampleToData = try JSONSerialization.data(withJSONObject: sample, options: [])
+                CreateAndPerformPackage(type: .khdataStatistics, data: sampleToData, identifier: identifier, onCompletion: onCompletion)
+            }
+        }
+        catch{
+            print("Error Transform Data: \(error)")
+        }
+    }
+    
+    func md5(data: Data) -> String {
+        var hash = [UInt8](repeating: 0, count: Int(CC_MD5_DIGEST_LENGTH))
+        data.withUnsafeBytes {
+            _ = CC_MD5($0.baseAddress, CC_LONG(data.count), &hash)
+        }
+        return hash.map { String(format: "%02x", $0) }.joined()
     }
     
     // function called when a new clinical data is received
@@ -129,9 +185,10 @@ internal class Infrastructure {
      
      - Parameter Type: type of package that is required to be sent
      PackageType:
-         case hkdata = "HKDATA"
-         case metricsData = "HKDATA_METRICS"
-         case clinicalData = "HKCLINICAL"
+     case hkdata = "HKDATA"
+     case metricsData = "HKDATA_METRICS"
+     case clinicalData = "HKCLINICAL"
+      case hkdataStatistics="HKDATASTATISTICS"
      
      - Parameter data: the data to send
      - Parameter identifier: unique package identifier

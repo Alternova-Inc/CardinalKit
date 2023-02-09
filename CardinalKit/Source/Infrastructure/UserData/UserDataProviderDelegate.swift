@@ -15,6 +15,7 @@ public protocol UserDataProviderDelegate{
     var scheduleCollection: String? {get}
     var dataBucketClinicalRecords: String { get }
     var dataBucketHealthKit: String { get }
+    var dataBucketHealthKitStatistics: String { get }
     var dataBucketStorage: String { get }
     var dataBucketMetrics: String { get }
 }
@@ -23,6 +24,7 @@ public class CKUserDataProvider: UserDataProviderDelegate {
     
     public var dataBucketClinicalRecords = "clinicalRecords"
     public var dataBucketHealthKit = "healthKit"
+    public var dataBucketHealthKitStatistics = "healthKitStatistics"
     public var dataBucketStorage = "storage"
     public var dataBucketMetrics = "metrics"
     

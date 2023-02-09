@@ -238,4 +238,11 @@ extension CKApp{
     class public func getClinicalPermission(completion: @escaping (Result<Bool, Error>) -> Void) {
         instance.infrastructure.getClinicalPermission(completion: completion)
     }
+    
+    /**
+     collect data btween two dates using StatistiscCollect from Healkit
+     */
+    class public func collectDataWithStatisticCollect(fromDate startDate:Date, toDate endDate: Date, completion: @escaping () -> Void){
+        instance.infrastructure.collectDataWithStatisticCollection(fromDate: startDate, toDate: endDate, completion: completion)
+    }
 }
