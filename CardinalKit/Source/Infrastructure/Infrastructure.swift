@@ -8,7 +8,6 @@
 import Foundation
 import CommonCrypto
 
-
 // Infrastructure layer of DDD architecture
 /// This layer will be the layer that accesses external services such as database, messaging systems and email services.
 
@@ -40,12 +39,12 @@ internal class Infrastructure {
     
     // Prompt user for healthkit permissions
     func getHealthPermission(completion: @escaping (Result<Bool, Error>) -> Void){
-        healthPermissionProvider.getHealthPermissions(completion: completion)
+       healthPermissionProvider.getHealthPermissions(completion: completion)
     }
     
     // Ask the user for clinical permissions
     func getClinicalPermission(completion: @escaping (Result<Bool, Error>) -> Void){
-        healthPermissionProvider.getRecordsPermissions(completion: completion)
+       healthPermissionProvider.getRecordsPermissions(completion: completion)
     }
     
     // start healthkit data collection in the background
@@ -62,17 +61,31 @@ internal class Infrastructure {
         }
     }
     
+    // start healthkit data collection in the background using Statistics Collection
+    func startBackgroundDeliveryDataWithStatisticCollection(){
+        healthPermissionProvider.getHealthPermissions{ result in
+            switch result{
+                case .success(let success):
+                if success {
+                    self.healthKitManager.startHealthKitCollectionInBackground(withFrequency: "", withStatistics: true)
+                }
+                case .failure(let error):
+                 print("error \(error)")
+            }
+        }
+    }
+    
     // get data from healthkit on a specific date
     func collectData(fromDate startDate:Date, toDate endDate: Date, completion: @escaping () -> Void){
         healthPermissionProvider.getAllPermissions(){ result in
             switch result{
-            case .success(let success):
+                case .success(let success):
                 if success {
                     self.healthKitManager.startCollectionByDayBetweenDate(fromDate: startDate, toDate: endDate, completion: completion)
                     self.healthKitManager.collectAndUploadClinicalTypes()
                 }
-            case .failure(let error):
-                print("error \(error)")
+                case .failure(let error):
+                 print("error \(error)")
             }
         }
     }
@@ -81,12 +94,12 @@ internal class Infrastructure {
     func collectDataWithStatisticCollection(fromDate startDate:Date, toDate endDate: Date, completion: @escaping () -> Void){
         healthPermissionProvider.getAllPermissions(){ result in
             switch result{
-            case .success(let success):
+                case .success(let success):
                 if success {
-                    self.healthKitManager.starCollectionBetweenDate(fromDate: startDate, toDate: endDate, completion: completion)
+                    self.healthKitManager.starCollectionBetweenDateWithStatisticCollection(fromDate: startDate, toDate: endDate, completion: completion)
                 }
-            case .failure(let error):
-                print("error \(error)")
+                case .failure(let error):
+                 print("error \(error)")
             }
         }
     }
@@ -95,12 +108,12 @@ internal class Infrastructure {
     func collectClinicalData(){
         healthPermissionProvider.getAllPermissions(){ result in
             switch result{
-            case .success(let success):
+                case .success(let success):
                 if success {
                     self.healthKitManager.collectAndUploadClinicalTypes()
                 }
-            case .failure(let error):
-                print("error \(error)")
+                case .failure(let error):
+                 print("error \(error)")
             }
         }
     }
@@ -111,7 +124,7 @@ internal class Infrastructure {
             // Transfom Data in OPENMHealth Format
             let samplesArray:[[String: Any]] = try mhSerializer.json(for: data)
             for sample in samplesArray{
-                
+               
                 var identifier = "HKData"
                 if let header = sample["header"] as? [String:Any],
                    let id = header["id"] as? String{
@@ -133,7 +146,7 @@ internal class Infrastructure {
             // Transfom Data in OPENMHealth Format
             let samplesArray:[[String: Any]] = try mhSerializer.json(for: data)
             for sample in samplesArray{
-                
+         
                 var identifier = "HKDataStatistics"
                 
                 if let body = sample["body"] as? [String:Any],
@@ -147,11 +160,25 @@ internal class Infrastructure {
                     identifier = hash
                 }
                 
-                if let header:NSMutableDictionary = sample["header"] as? NSMutableDictionary{
-                    header["id"] = identifier
+                if let body = sample["body"] as? [String:Any],
+                   let timeframe = body["effective_time_frame"] as? [String:Any],
+                   let dateTime = timeframe["date_time"] as? String,
+                   let quantity = body["quantity_type"] as? String{
+                    let combine = quantity + dateTime
+                    let hash = md5(data: combine.data(using: .utf8)!)
+                    identifier = hash
                 }
                 
-                let sampleToData = try JSONSerialization.data(withJSONObject: sample, options: [])
+                var sampleUpdate = sample
+                
+                if var header = sampleUpdate["header"] as? [String:Any]{
+                    header.updateValue(identifier, forKey: "id")
+                    sampleUpdate.updateValue(header, forKey: "header")
+                }
+               
+               
+                let sampleToData = try JSONSerialization.data(withJSONObject: sampleUpdate, options: [])
+
                 CreateAndPerformPackage(type: .khdataStatistics, data: sampleToData, identifier: identifier, onCompletion: onCompletion)
             }
         }
@@ -188,7 +215,7 @@ internal class Infrastructure {
      case hkdata = "HKDATA"
      case metricsData = "HKDATA_METRICS"
      case clinicalData = "HKCLINICAL"
-      case hkdataStatistics="HKDATASTATISTICS"
+     case hkdataStatistics="HKDATASTATISTICS"
      
      - Parameter data: the data to send
      - Parameter identifier: unique package identifier
@@ -205,6 +232,5 @@ internal class Infrastructure {
         catch{
             print("[upload] ERROR " + error.localizedDescription)
         }
-        
     }
 }

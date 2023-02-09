@@ -9,7 +9,7 @@ import Foundation
 
 /**
  Structure to configure the different protocols used by CardinalKit
-
+ 
  -  networkDeliveryDelegate: Protocol for sending data
  -  networkReceiverDelegate: Protocol for receiving data
  -  localDBDelegate:     Protocol for implementing a local database
@@ -24,7 +24,7 @@ public struct CKAppOptions {
     
     /**
      Initialize the protocols with the ones used by cardinalKit by default
-              - by default firebase is used as external database and realm as internal database
+     - by default firebase is used as external database and realm as internal database
      */
     public init() {
         networkDeliveryDelegate = CKDelivery()
@@ -35,7 +35,7 @@ public struct CKAppOptions {
 }
 
 /// Presentation layer of DDD architecture
-/// This layer is the part where interaction with external systems happens. 
+/// This layer is the part where interaction with external systems happens.
 public class CKApp{
     
     internal static let instance = CKApp()
@@ -77,18 +77,18 @@ extension CKApp{
      Request filtered data from a specific route
      - Parameter route: the path from where the data will be requested
      - Parameter filters: array of objects of type FilterModel to perform filters
-        FilterModel {
-            var field:String
-            var filterType:FilterType
-            var value:Any
-        }
-         public enum FilterType {
-             case GreaterThan
-             case GreaterOrEqualTo
-             case LessThan
-             case LessOrEqualTo
-             case equalTo
-         }
+     FilterModel {
+     var field:String
+     var filterType:FilterType
+     var value:Any
+     }
+     public enum FilterType {
+     case GreaterThan
+     case GreaterOrEqualTo
+     case LessThan
+     case LessOrEqualTo
+     case equalTo
+     }
      Example FilterModel(field:"user",filterType:.equealTo,value:"123")
      - Parameter onCompletion:Closure that will be executed when the request is completed can return any object
      */
@@ -100,7 +100,7 @@ extension CKApp{
     
     /**
      Request the calendar items of a specific date
-
+     
      - Parameter date: Date to filter the events
      - Parameter onCompletion: Closure that is executed with the response of the events, returns an array of (scheduleModel)
      */
@@ -112,7 +112,7 @@ extension CKApp{
     
     /**
      Get a public url of a file located in firebase storage
-
+     
      - Parameter path: firebase storage path where the file is stored
      - Parameter onCompletion: Closure that is executed with the response of URL
      - Parameter onError: Closure that is executed when an error occurs it may be that the path does not exist
@@ -125,7 +125,7 @@ extension CKApp{
     
     /**
      Get a file from Firebase storage and save in specific Url Folder
-
+     
      - Parameter path: firebase storage path where the file is stored
      - Parameter url:  path where we want to save the file
      - Parameter onCompletion: Closure that is executed with the response (Bool if the download is correct and Error if an error occurs)
@@ -142,7 +142,7 @@ extension CKApp{
     
     /**
      Send data to firebase (any type of data) (any configurable Paramater)
-        By defect Ck send Json data parameters: "merge" boolean to true if you need to merge the data in firebase
+     By defect Ck send Json data parameters: "merge" boolean to true if you need to merge the data in firebase
      - Parameter route: path where you want to save your data
      - Parameter data:  data in the format required by your CK database delegate receives any json
      - Parameter params: configurable parameters of your database, ck receives the boolean merge
@@ -173,14 +173,14 @@ extension CKApp{
      - Parameter items:array of type ScheduleModel to create the events
      ScheduleModel
      {
-         public let title:String
-         public let instructions:String
-         public let id:String
-         public let type:ScheduleModelType
-         public let surveyId:String?
-         public let startDate: Date
-         public let endDate: Date?
-         public let interval: Interval
+     public let title:String
+     public let instructions:String
+     public let id:String
+     public let type:ScheduleModelType
+     public let surveyId:String?
+     public let startDate: Date
+     public let endDate: Date?
+     public let interval: Interval
      }
      
      - Parameter onCompletion: Closure that is executed with the response (Bool if the upload is correct )
@@ -209,6 +209,14 @@ extension CKApp{
      */
     class public func startBackgroundDeliveryData(){
         instance.infrastructure.startBackgroundDeliveryData()
+    }
+    
+    //MARK: add to cardinal kit
+    /**
+     start background data collection
+     */
+    class public func startBackgroundDeliveryDataWithStatisticCollection(){
+        instance.infrastructure.startBackgroundDeliveryDataWithStatisticCollection()
     }
     
     /**

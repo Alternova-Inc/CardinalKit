@@ -98,7 +98,7 @@ class CKOpenMHSerializer: OpenMHSerializer{
             return data
         }
     }
-    
+
     private func joinDataStepCount(data: [[String: Any]])->[[String: Any]]{
         var finalData = [[String: Any]]()
         var datesDictionary = [Date:[String:Any]]()
@@ -107,17 +107,17 @@ class CKOpenMHSerializer: OpenMHSerializer{
         
         for element in data {
             if let nBody = element["body"] as? [String:Any],
-               let count = nBody["step_count"] as? Int{
+               let count = nBody["step_count"] as? Double{
                 if let time_frame = nBody["effective_time_frame"] as? [String:Any]{
                     var dateString:String? = nil
                     if let dateInterval = time_frame["time_interval"] as? [String:Any],
-                    let dateStr = dateInterval["start_date_time"] as? String{
+                       let dateStr = dateInterval["start_date_time"] as? String{
                         dateString = dateStr
                     }
-                
-                  if let dateStr = time_frame["date_time"] as? String{
-                      dateString = dateStr
-                  }
+                    
+                    if let dateStr = time_frame["date_time"] as? String{
+                        dateString = dateStr
+                    }
                     
                     if let dateStr = dateString{
                         let dateFormatter = DateFormatter()
@@ -126,13 +126,13 @@ class CKOpenMHSerializer: OpenMHSerializer{
                         let onlyDate = removeTimeStamp(fromDate: date)
                         var finalStepCount = count
                         if let dateStepCount = datesDictionary[onlyDate]{
-                            finalStepCount+=dateStepCount["count"] as! Int
+                            finalStepCount+=dateStepCount["count"] as! Double
                         }
                         else{
                             datesDictionary[onlyDate]=[String:Any]()
                             datesDictionary[onlyDate]?["date"] = dateStr
                         }
-                        datesDictionary[onlyDate]?["count"]=finalStepCount
+                        datesDictionary[onlyDate]?["count"] = Int(finalStepCount)
                     }
                 }
             }
@@ -152,6 +152,4 @@ class CKOpenMHSerializer: OpenMHSerializer{
         }
         return date
     }
-    
-    
 }
