@@ -39,24 +39,24 @@ internal class Infrastructure {
     
     // Prompt user for healthkit permissions
     func getHealthPermission(completion: @escaping (Result<Bool, Error>) -> Void){
-       healthPermissionProvider.getHealthPermissions(completion: completion)
+        healthPermissionProvider.getHealthPermissions(completion: completion)
     }
     
     // Ask the user for clinical permissions
     func getClinicalPermission(completion: @escaping (Result<Bool, Error>) -> Void){
-       healthPermissionProvider.getRecordsPermissions(completion: completion)
+        healthPermissionProvider.getRecordsPermissions(completion: completion)
     }
     
     // start healthkit data collection in the background
     func startBackgroundDeliveryData(){
         healthPermissionProvider.getHealthPermissions{ result in
             switch result{
-                case .success(let success):
+            case .success(let success):
                 if success {
                     self.healthKitManager.startHealthKitCollectionInBackground(withFrequency: "", withStatistics: false)
                 }
-                case .failure(let error):
-                 print("error \(error)")
+            case .failure(let error):
+                print("error \(error)")
             }
         }
     }
@@ -65,12 +65,12 @@ internal class Infrastructure {
     func startBackgroundDeliveryDataWithStatisticCollection(){
         healthPermissionProvider.getHealthPermissions{ result in
             switch result{
-                case .success(let success):
+            case .success(let success):
                 if success {
                     self.healthKitManager.startHealthKitCollectionInBackground(withFrequency: "", withStatistics: true)
                 }
-                case .failure(let error):
-                 print("error \(error)")
+            case .failure(let error):
+                print("error \(error)")
             }
         }
     }
@@ -79,13 +79,13 @@ internal class Infrastructure {
     func collectData(fromDate startDate:Date, toDate endDate: Date, completion: @escaping () -> Void){
         healthPermissionProvider.getAllPermissions(){ result in
             switch result{
-                case .success(let success):
+            case .success(let success):
                 if success {
                     self.healthKitManager.startCollectionByDayBetweenDate(fromDate: startDate, toDate: endDate, completion: completion)
                     self.healthKitManager.collectAndUploadClinicalTypes()
                 }
-                case .failure(let error):
-                 print("error \(error)")
+            case .failure(let error):
+                print("error \(error)")
             }
         }
     }
@@ -94,12 +94,12 @@ internal class Infrastructure {
     func collectDataWithStatisticCollection(fromDate startDate:Date, toDate endDate: Date, completion: @escaping () -> Void){
         healthPermissionProvider.getAllPermissions(){ result in
             switch result{
-                case .success(let success):
+            case .success(let success):
                 if success {
                     self.healthKitManager.starCollectionBetweenDateWithStatisticCollection(fromDate: startDate, toDate: endDate, completion: completion)
                 }
-                case .failure(let error):
-                 print("error \(error)")
+            case .failure(let error):
+                print("error \(error)")
             }
         }
     }
@@ -108,12 +108,12 @@ internal class Infrastructure {
     func collectClinicalData(){
         healthPermissionProvider.getAllPermissions(){ result in
             switch result{
-                case .success(let success):
+            case .success(let success):
                 if success {
                     self.healthKitManager.collectAndUploadClinicalTypes()
                 }
-                case .failure(let error):
-                 print("error \(error)")
+            case .failure(let error):
+                print("error \(error)")
             }
         }
     }
@@ -124,7 +124,7 @@ internal class Infrastructure {
             // Transfom Data in OPENMHealth Format
             let samplesArray:[[String: Any]] = try mhSerializer.json(for: data)
             for sample in samplesArray{
-               
+                
                 var identifier = "HKData"
                 if let header = sample["header"] as? [String:Any],
                    let id = header["id"] as? String{
@@ -141,12 +141,17 @@ internal class Infrastructure {
     }
     
     // function called when new data is received from healthkit
-    func onHealthStatisticsDataColected(data:[HKSample], onCompletion:@escaping ()->Void){
+    func onHealthStatisticsDataColected(data:[HKSample],isStatisticCollection: Bool? = nil, onCompletion:@escaping ()->Void){
         do{
+            var _isStatisticsCollection = false
+            if let isStatisticCollection = isStatisticCollection {
+                _isStatisticsCollection = isStatisticCollection
+            }
+            
             // Transfom Data in OPENMHealth Format
             let samplesArray:[[String: Any]] = try mhSerializer.json(for: data)
             for sample in samplesArray{
-         
+                
                 var identifier = "HKDataStatistics"
                 
                 if let body = sample["body"] as? [String:Any],
@@ -172,14 +177,19 @@ internal class Infrastructure {
                 var sampleUpdate = sample
                 
                 if var header = sampleUpdate["header"] as? [String:Any]{
+                    
                     header.updateValue(identifier, forKey: "id")
                     sampleUpdate.updateValue(header, forKey: "header")
                 }
-               
-               
+                
+                if(_isStatisticsCollection){
+                    var data : [String:Any] = ["isStatisticCollection" : isStatisticCollection]
+                    sampleUpdate.append(data)
+                }
+                
                 let sampleToData = try JSONSerialization.data(withJSONObject: sampleUpdate, options: [])
-
-                CreateAndPerformPackage(type: .khdataStatistics, data: sampleToData, identifier: identifier, onCompletion: onCompletion)
+                
+                CreateAndPerformPackage(type: .hkdata, data: sampleToData, identifier: identifier, onCompletion: onCompletion)
             }
         }
         catch{

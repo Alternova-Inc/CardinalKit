@@ -20,7 +20,6 @@ public enum PackageType: String {
 //        case .hkdataAggregate:
 //            return "Aggregate summary per day"
     case hkdata = "HKDATA"
-    case khdataStatistics = "HKDATA_STATISTICS"
     case metricsData = "HKDATA_METRICS"
     case clinicalData = "HKCLINICAL"
     
@@ -30,8 +29,6 @@ public enum PackageType: String {
         switch self {
         case .hkdata:
             return "Dump of tracked data from healthkit"
-        case .khdataStatistics:
-            return "Dump of tracked data from healthkit Statistics"
         case .metricsData:
             return "metrics data"
         case .clinicalData:
