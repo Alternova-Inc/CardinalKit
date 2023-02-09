@@ -109,6 +109,7 @@ extension HealthKitManager{
                 sem.signal()
             }
         }
+        completion()
     }
     
     private func setUpCollectionByDayBetweenDates(fromDate startDate:Date, toDate endDate:Date?, forTypes types:Set<HKSampleType>, completion: @escaping () -> Void){
