@@ -197,7 +197,7 @@ internal class Infrastructure {
                 group.enter()
                 
                 queue.async {
-                    self.CreateAndPerformPackage(type: .hkdata, data: sampleToData, identifier: identifier){
+                    self.CreateAndPerformPackage(type: .hkdata, data: sampleToData, identifier: identifier, isStatisticCollection: _isStatisticsCollection){
                         group.leave()
                     }
                 }
