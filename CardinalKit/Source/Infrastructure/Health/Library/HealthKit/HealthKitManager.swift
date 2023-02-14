@@ -102,14 +102,15 @@ extension HealthKitManager{
     }
     
     private func setUpCollectionBetweenDatesWithStatisticCollection(fromDate startDate:Date, toDate endDate:Date?, forTypes types:Set<HKSampleType>, completion: @escaping () -> Void){
-        let sem = DispatchSemaphore.init(value: types.count)
+        let sem = DispatchSemaphore.init(value: 0)
         for type in types {
-            sem.wait()
             collectData(forType: type, fromDate: startDate, toDate: endDate!){
                 sem.signal()
             }
+            sem.wait()
         }
         completion()
+        print("completion Collection With Statistic Query")
     }
     
     private func setUpCollectionByDayBetweenDates(fromDate startDate:Date, toDate endDate:Date?, forTypes types:Set<HKSampleType>, completion: @escaping () -> Void){
@@ -248,8 +249,7 @@ extension HealthKitManager{
         }
         else{
             // else get last sync revision for source
-            _startDate = (self.getLastSyncDate(forType: type))
-            print("Last Sync Date for \(type.description) date: \(_startDate)")
+            _startDate = (self.getLastSyncDate(forType: type)).dayByAdding(-1)!
         }
         
         queryStatisticCollectionHealthStore(forType: quantityType, fromDate: _startDate){
@@ -257,18 +257,24 @@ extension HealthKitManager{
             
             let sampleType = HKSampleType.quantityType(forIdentifier: quantityType)!
             
-            self.convertStatisticsToHKSamples(statisticsCollection: results!, quantityType: sampleType,fromDate: _startDate, toDate: endDate){
-                results in
-                self.saveLastSyncDate(forType: type, date: Date())
-                if results.count > 0 {
-                    CKApp.instance.infrastructure.onHealthStatisticsDataColected(data: results, isStatisticCollection: true){
-                        print("complete statistic collection ")
+            if let results = results {
+                self.convertStatisticsToHKSamples(statisticsCollection: results, quantityType: sampleType,fromDate: _startDate, toDate: endDate){
+                    results in
+                    self.saveLastSyncDate(forType: type, date: Date().endOfDay!)
+                    if results.count > 0 {
+                        CKApp.instance.infrastructure.onHealthStatisticsDataColected(data: results, isStatisticCollection: true){
+                            print("complete statistic collection ")
+                            onCompletion()
+                        }
+                    }
+                    else{
                         onCompletion()
                     }
                 }
-                else{
-                    onCompletion()
-                }
+            }
+            
+            if let error = error {
+                VError("%@", error.localizedDescription)
             }
         }
     }

@@ -142,6 +142,10 @@ internal class Infrastructure {
     
     // function called when new data is received from healthkit
     func onHealthStatisticsDataColected(data:[HKSample],isStatisticCollection: Bool? = nil, onCompletion:@escaping ()->Void){
+        
+        let queue = DispatchQueue.global()
+        let group = DispatchGroup()
+        
         do{
             var _isStatisticsCollection = false
             if let isStatisticCollection = isStatisticCollection {
@@ -151,6 +155,7 @@ internal class Infrastructure {
             // Transfom Data in OPENMHealth Format
             let samplesArray:[[String: Any]] = try mhSerializer.json(for: data)
             for sample in samplesArray{
+                
                 
                 var identifier = "HKDataStatistics"
                 
@@ -189,8 +194,18 @@ internal class Infrastructure {
                 
                 let sampleToData = try JSONSerialization.data(withJSONObject: sampleUpdate, options: [])
                 
-                CreateAndPerformPackage(type: .hkdata, data: sampleToData, identifier: identifier, onCompletion: onCompletion)
+                group.enter()
+                
+                queue.async {
+                    self.CreateAndPerformPackage(type: .hkdata, data: sampleToData, identifier: identifier){
+                        group.leave()
+                    }
+                }
+                
             }
+            group.wait()
+            onCompletion()
+            print("Upload Process is complete")
         }
         catch{
             print("Error Transform Data: \(error)")
