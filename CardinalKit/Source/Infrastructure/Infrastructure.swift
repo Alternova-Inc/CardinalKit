@@ -143,7 +143,7 @@ internal class Infrastructure {
     // function called when new data is received from healthkit
     func onHealthStatisticsDataColected(data:[HKSample],isStatisticCollection: Bool? = nil, onCompletion:@escaping ()->Void){
         
-        let queue = DispatchQueue.global()
+        let queue = DispatchQueue.main
         let group = DispatchGroup()
         
         do{

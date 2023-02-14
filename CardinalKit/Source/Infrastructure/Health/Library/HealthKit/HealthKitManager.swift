@@ -103,9 +103,12 @@ extension HealthKitManager{
     
     private func setUpCollectionBetweenDatesWithStatisticCollection(fromDate startDate:Date, toDate endDate:Date?, forTypes types:Set<HKSampleType>, completion: @escaping () -> Void){
         let sem = DispatchSemaphore.init(value: 0)
+        let queue = DispatchQueue.main
         for type in types {
-            collectData(forType: type, fromDate: startDate, toDate: endDate!){
-                sem.signal()
+            queue.async{ [self] in
+                collectData(forType: type, fromDate: startDate, toDate: endDate!){
+                    sem.signal()
+                }
             }
             sem.wait()
         }
