@@ -245,11 +245,16 @@ internal class Infrastructure {
      - Parameter data: the data to send
      - Parameter identifier: unique package identifier
      */
-    private func CreateAndPerformPackage(type: PackageType, data:Data, identifier: String,  onCompletion:@escaping ()->Void){
+    private func CreateAndPerformPackage(type: PackageType, data:Data, identifier: String, isStatisticCollection: Bool? = nil,  onCompletion:@escaping ()->Void){
         do{
             let packageName = identifier
             let package = try Package(packageName, type: type, identifier: packageName, data: data)
-            let networkObject = NetworkRequestObject.findOrCreateNetworkRequest(package)
+            var networkObject = NetworkRequestObject.findOrCreateNetworkRequest(package)
+            
+            if let isStatisticCollection = isStatisticCollection{
+                networkObject.lastAttempt = nil
+            }
+            
             try networkObject.perform(){ complete, Error in
                 onCompletion()
             }
