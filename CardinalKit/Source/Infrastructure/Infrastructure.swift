@@ -188,7 +188,7 @@ internal class Infrastructure {
                 }
                 
                 if(_isStatisticsCollection){
-                    var data : [String:Any] = ["isStatisticCollection" : isStatisticCollection]
+                    let data : [String:Any] = ["isStatisticCollection" : _isStatisticsCollection]
                     sampleUpdate.append(data)
                 }
                 
@@ -201,7 +201,6 @@ internal class Infrastructure {
                         group.leave()
                     }
                 }
-                
             }
             group.wait()
             onCompletion()

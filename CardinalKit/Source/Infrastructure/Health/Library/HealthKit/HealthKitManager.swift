@@ -146,7 +146,6 @@ extension HealthKitManager{
                 }
             })
         }
-        
     }
     
     private func setUpBackgroundCollection(withFrequency frequency:HKUpdateFrequency, forTypes types:Set<HKSampleType>, onCompletion:((_ success: Bool, _ error: Error?) -> Void)? = nil){
