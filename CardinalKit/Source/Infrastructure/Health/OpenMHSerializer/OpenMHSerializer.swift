@@ -104,6 +104,7 @@ class CKOpenMHSerializer: OpenMHSerializer{
         var datesDictionary = [Date:[String:Any]]()
         var firstElement = data.first!
         var body = firstElement["body"] as! [String: Any]
+        var header = firstElement["header"] as! [String: Any]
         
         for element in data {
             if let nBody = element["body"] as? [String:Any],
@@ -137,13 +138,18 @@ class CKOpenMHSerializer: OpenMHSerializer{
                 }
             }
         }
-        for dateElement in datesDictionary{
-            body["step_count"] = dateElement.value["count"]
-            body["effective_time_frame"] = ["date_time":dateElement.value["date"]]
-            firstElement["body"]=body
-            finalData.append(firstElement)
+        if (data.count != datesDictionary.count){
+            for dateElement in datesDictionary{
+                body["step_count"] = dateElement.value["count"]
+                body["effective_time_frame"] = ["date_time":dateElement.value["date"]]
+                firstElement["body"]=body
+                header["creation_date_time"] = dateElement.value["date"]
+                firstElement["header"] = header
+                finalData.append(firstElement)
+            }
+            return finalData
         }
-        return finalData
+        return data
     }
     
     private func removeTimeStamp(fromDate: Date) -> Date {
