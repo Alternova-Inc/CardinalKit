@@ -101,19 +101,21 @@ extension HealthKitManager{
         }
     }
     
-    private func setUpCollectionBetweenDatesWithStatisticCollection(fromDate startDate:Date, toDate endDate:Date?, forTypes types:Set<HKSampleType>, completion: @escaping () -> Void){
-        let sem = DispatchSemaphore.init(value: 0)
-        let queue = DispatchQueue.main
+    private func setUpCollectionBetweenDatesWithStatisticCollection(fromDate startDate: Date, toDate endDate: Date?, forTypes types: Set<HKSampleType>, completion: @escaping () -> Void) {
+        let dispatchGroup = DispatchGroup()
+        let queue = DispatchQueue.global(qos: .default)
         for type in types {
-            queue.async{ [self] in
-                collectData(forType: type, fromDate: startDate, toDate: endDate!){
-                    sem.signal()
+            dispatchGroup.enter()
+            queue.async { [self] in
+                collectData(forType: type, fromDate: startDate, toDate: endDate!) {
+                    dispatchGroup.leave()
                 }
             }
-            sem.wait()
         }
-        completion()
-        print("completion Collection With Statistic Query")
+        dispatchGroup.notify(queue: .main) {
+            completion()
+            print("Completion Collection With Statistic Query")
+        }
     }
     
     private func setUpCollectionByDayBetweenDates(fromDate startDate:Date, toDate endDate:Date?, forTypes types:Set<HKSampleType>, completion: @escaping () -> Void){
