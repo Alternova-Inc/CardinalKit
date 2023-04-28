@@ -252,4 +252,11 @@ extension CKApp{
     class public func collectDataWithStatisticCollect(fromDate startDate:Date, toDate endDate: Date, completion: @escaping () -> Void){
         instance.infrastructure.collectDataWithStatisticCollection(fromDate: startDate, toDate: endDate, completion: completion)
     }
+    
+    /**
+     stop the collect data in background
+     */
+    class public func stopBackgroundDeliveryData(){
+        instance.infrastructure.stopBackgroundDeliveryData()
+    }
 }

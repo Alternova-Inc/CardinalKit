@@ -75,6 +75,11 @@ internal class Infrastructure {
         }
     }
     
+    func stopBackgroundDeliveryData(){
+        self.healthKitManager.healthStore.disableAllBackgroundDelivery(){_,_ in
+        }
+    }
+    
     // get data from healthkit on a specific date
     func collectData(fromDate startDate:Date, toDate endDate: Date, completion: @escaping () -> Void){
         healthPermissionProvider.getAllPermissions(){ result in
