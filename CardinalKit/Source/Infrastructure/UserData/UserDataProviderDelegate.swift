@@ -71,7 +71,7 @@ public class CKUserDataProviderCustom: UserDataProviderDelegate{
     public var studyID: String
     public var collectionDataId: String
     
-    init(currentUserID:String, studyID:String,collectionDataId: String){
+    public init(currentUserID:String, studyID:String,collectionDataId: String){
         self.currentUserID = currentUserID
         self.studyID = studyID
         self.collectionDataId = collectionDataId
