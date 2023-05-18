@@ -67,19 +67,20 @@ public class CKUserDataProviderCustom: UserDataProviderDelegate{
     public var dataBucketStorage = "storage"
     public var dataBucketMetrics = "metrics"
     
-    public var currentUserID: String
-    public var studyID: String
-    public var collectionDataId: String
+    public var customCurrentUserId: String
+    public var customStudyID: String
+    public var customRootAuthCollection: String
+    public var customScheduleCollection: String
     
-    public init(currentUserID:String, studyID:String,collectionDataId: String){
-        self.currentUserID = currentUserID
-        self.studyID = studyID
-        self.collectionDataId = collectionDataId
+    public init(customCurrentUserId:String, customStudyID:String,customRootAuthCollection: String){
+        self.customCurrentUserId = customCurrentUserId
+        self.customStudyID = customStudyID
+        self.customRootAuthCollection = customRootAuthCollection
+        self.customScheduleCollection = "/studies/\(customStudyID)/schedule"
     }
     
-    
     public var currentUserId: String? {
-        return currentUserID
+        return customCurrentUserId
     }
     
     public var authCollection: String? {
@@ -87,12 +88,11 @@ public class CKUserDataProviderCustom: UserDataProviderDelegate{
            let root = rootAuthCollection {
             return "\(root)\(userId)/"
         }
-        
         return nil
     }
     
     public var scheduleCollection: String? {
-        return "/studies/\(studyID)/schedule"
+        return customScheduleCollection
     }
     
     public var currentUserEmail: String? {
@@ -100,6 +100,6 @@ public class CKUserDataProviderCustom: UserDataProviderDelegate{
     }
     
     fileprivate var rootAuthCollection: String? {
-        return "/studies/\(studyID)/users/\(collectionDataId)"
+        return customRootAuthCollection
     }
 }

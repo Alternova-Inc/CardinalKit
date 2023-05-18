@@ -45,7 +45,7 @@ public struct CKAppOptions {
 /// This layer is the part where interaction with external systems happens.
 public class CKApp{
     
-    internal static let instance = CKApp()
+    public static let instance = CKApp()
     internal var infrastructure: Infrastructure
     var options = CKAppOptions()
     
@@ -65,6 +65,11 @@ public class CKApp{
         // Configure Local DB
         _ = instance.options.localDBDelegate?.configure()
     }
+    
+    public func reconfigure( options: CKAppOptions) {
+         self.options = options
+         self.infrastructure = Infrastructure()
+     }
 }
 
 // Request data from the external database
