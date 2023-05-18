@@ -32,6 +32,13 @@ public struct CKAppOptions {
         userDataProviderDelegate = CKUserDataProvider()
         localDBDelegate = RealmManager()
     }
+    
+    public init(userDataProvider:CKUserDataProviderCustom) {
+        networkDeliveryDelegate = CKDelivery()
+        networkReceiverDelegate = CKReceiver()
+        userDataProviderDelegate = userDataProvider
+        localDBDelegate = RealmManager()
+    }
 }
 
 /// Presentation layer of DDD architecture

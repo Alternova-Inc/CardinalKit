@@ -59,3 +59,47 @@ public class CKUserDataProvider: UserDataProviderDelegate {
         return nil
     }
 }
+
+public class CKUserDataProviderCustom: UserDataProviderDelegate{
+    public var dataBucketClinicalRecords = "clinicalRecords"
+    public var dataBucketHealthKit = "healthKit"
+    public var dataBucketHealthKitStatistics = "healthKitStatistics"
+    public var dataBucketStorage = "storage"
+    public var dataBucketMetrics = "metrics"
+    
+    public var currentUserID: String
+    public var studyID: String
+    public var collectionDataId: String
+    
+    init(currentUserID:String, studyID:String,collectionDataId: String){
+        self.currentUserID = currentUserID
+        self.studyID = studyID
+        self.collectionDataId = collectionDataId
+    }
+    
+    
+    public var currentUserId: String? {
+        return currentUserID
+    }
+    
+    public var authCollection: String? {
+        if let userId = currentUserId,
+           let root = rootAuthCollection {
+            return "\(root)\(userId)/"
+        }
+        
+        return nil
+    }
+    
+    public var scheduleCollection: String? {
+        return "/studies/\(studyID)/schedule"
+    }
+    
+    public var currentUserEmail: String? {
+        return Auth.auth().currentUser?.email
+    }
+    
+    fileprivate var rootAuthCollection: String? {
+        return "/studies/\(studyID)/users/\(collectionDataId)"
+    }
+}
