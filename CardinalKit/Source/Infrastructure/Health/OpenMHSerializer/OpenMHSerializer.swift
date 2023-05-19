@@ -127,7 +127,11 @@ class CKOpenMHSerializer: OpenMHSerializer{
                         let onlyDate = removeTimeStamp(fromDate: date)
                         var finalStepCount = count
                         if let dateStepCount = datesDictionary[onlyDate]{
-                            finalStepCount+=dateStepCount["count"] as! Double
+                            if let doubleValue = dateStepCount["count"] as? Double {
+                                finalStepCount += doubleValue
+                            } else if let intValue = dateStepCount["count"] as? Int {
+                                finalStepCount += Double(intValue)
+                            }
                         }
                         else{
                             datesDictionary[onlyDate]=[String:Any]()
