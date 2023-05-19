@@ -72,8 +72,8 @@ public class HealthKitManager{
      - Parameter startDate: initial date
      - Parameter endDate: final date
      */
-    func starCollectionBetweenDateWithStatisticCollection(fromDate startDate:Date, toDate endDate:Date?, completion: @escaping () -> Void){
-        self.setUpCollectionBetweenDatesWithStatisticCollection(fromDate: startDate, toDate: endDate, forTypes: types, completion: completion)
+    func starCollectionBetweenDateWithStatisticCollection(fromDate startDate:Date, toDate endDate:Date?,dateComponentInterval: DateComponents? = nil, completion: @escaping () -> Void){
+        self.setUpCollectionBetweenDatesWithStatisticCollection(fromDate: startDate, toDate: endDate,dateComponentInterval: dateComponentInterval, forTypes: types, completion: completion)
     }
     
     /**
@@ -101,13 +101,13 @@ extension HealthKitManager{
         }
     }
     
-    private func setUpCollectionBetweenDatesWithStatisticCollection(fromDate startDate: Date, toDate endDate: Date?, forTypes types: Set<HKSampleType>, completion: @escaping () -> Void) {
+    private func setUpCollectionBetweenDatesWithStatisticCollection(fromDate startDate: Date, toDate endDate: Date?,dateComponentInterval: DateComponents? = nil, forTypes types: Set<HKSampleType>, completion: @escaping () -> Void) {
         let dispatchGroup = DispatchGroup()
         let queue = DispatchQueue.global(qos: .default)
         for type in types {
             dispatchGroup.enter()
             queue.async { [self] in
-                collectData(forType: type, fromDate: startDate, toDate: endDate!) {
+                collectData(forType: type, fromDate: startDate, toDate: endDate!, dateComponentInterval: dateComponentInterval) {
                     dispatchGroup.leave()
                 }
             }
@@ -205,6 +205,30 @@ extension HealthKitManager{
         }
     }
     
+    private func setUpBackgroundCollectionWithStatisticCollectionWithStartDate(startDate:Date, withFrequency frequency:HKUpdateFrequency, forTypes types:Set<HKSampleType>, onCompletion:((_ success: Bool, _ error: Error?) -> Void)? = nil){
+        let endDate = Date().dayByAdding(1)
+        for type in types{
+            let query = HKObserverQuery(sampleType: type, predicate: nil, updateHandler: {
+                (query, completionHandler, error) in
+                
+                self.collectData(forType: type, fromDate: startDate, toDate: endDate ?? Date()){
+                    
+                }
+                
+                completionHandler()
+            })
+            healthStore.execute(query)
+            healthStore.enableBackgroundDelivery(for: type, frequency: frequency, withCompletion: { (success, error) in
+                if let error = error {
+                    VError("%@", error.localizedDescription)
+                }
+                onCompletion?(success,error)
+            })
+        }
+    }
+    
+    
+    
     private func collectData(forType type:HKSampleType, fromDate startDate: Date? = nil, toDate endDate:Date, source:HKSource, onCompletion:@escaping (([HKSample])->Void)){
         print("Collecting type \(type.identifier)")
         let sourceRevision = HKSourceRevision(source: source, version: HKSourceRevisionAnyVersion)
@@ -242,7 +266,7 @@ extension HealthKitManager{
         }
     }
     
-    private func collectData(forType type:HKSampleType, fromDate startDate: Date? = nil, toDate endDate:Date, onCompletion:@escaping ()->Void ){
+    private func collectData(forType type:HKSampleType, fromDate startDate: Date? = nil, toDate endDate:Date,dateComponentInterval: DateComponents? = nil, onCompletion:@escaping ()->Void ){
         
         let quantityType = HKQuantityTypeIdentifier(rawValue: type.identifier)
         
@@ -256,7 +280,7 @@ extension HealthKitManager{
             _startDate = (self.getLastSyncDate(forType: type)).dayByAdding(-1)!
         }
         
-        queryStatisticCollectionHealthStore(forType: quantityType, fromDate: _startDate){
+        queryStatisticCollectionHealthStore(forType: quantityType, fromDate: _startDate, dateComponentInterval: dateComponentInterval){
             collectionQuery, results, error in
             
             let sampleType = HKSampleType.quantityType(forIdentifier: quantityType)!
@@ -349,7 +373,7 @@ extension HealthKitManager{
         healthStore.execute(query)
     }
     
-    fileprivate func queryStatisticCollectionHealthStore(forType type: HKQuantityTypeIdentifier, fromDate startDate: Date, queryHandler: @escaping (HKStatisticsCollectionQuery, HKStatisticsCollection?, Error?) -> Void ){
+    fileprivate func queryStatisticCollectionHealthStore(forType type: HKQuantityTypeIdentifier, fromDate startDate: Date,dateComponentInterval: DateComponents? = nil, queryHandler: @escaping (HKStatisticsCollectionQuery, HKStatisticsCollection?, Error?) -> Void ){
         
         let quantityType = HKQuantityType.quantityType(forIdentifier: type)!
         var options: HKStatisticsOptions = [.cumulativeSum]
@@ -358,7 +382,7 @@ extension HealthKitManager{
             options = [.discreteAverage]
         }
         
-        let statisticsCollectionQuery = HKStatisticsCollectionQuery(quantityType: quantityType, quantitySamplePredicate: nil, options: options, anchorDate: startDate, intervalComponents: DateComponents(day:1))
+        let statisticsCollectionQuery = HKStatisticsCollectionQuery(quantityType: quantityType, quantitySamplePredicate: nil, options: options, anchorDate: startDate, intervalComponents: dateComponentInterval ?? DateComponents(day:1))
         
         
         statisticsCollectionQuery.initialResultsHandler = { query, results, error in

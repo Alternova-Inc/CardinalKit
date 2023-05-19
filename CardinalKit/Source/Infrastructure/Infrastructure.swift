@@ -96,12 +96,12 @@ internal class Infrastructure {
     }
     
     //Get Data from healhkit on a specific date using StatistiCollection
-    func collectDataWithStatisticCollection(fromDate startDate:Date, toDate endDate: Date, completion: @escaping () -> Void){
+    func collectDataWithStatisticCollection(fromDate startDate:Date, toDate endDate: Date,dateComponentInterval: DateComponents? = nil, completion: @escaping () -> Void){
         healthPermissionProvider.getAllPermissions(){ result in
             switch result{
             case .success(let success):
                 if success {
-                    self.healthKitManager.starCollectionBetweenDateWithStatisticCollection(fromDate: startDate, toDate: endDate, completion: completion)
+                    self.healthKitManager.starCollectionBetweenDateWithStatisticCollection(fromDate: startDate, toDate: endDate, dateComponentInterval: dateComponentInterval,completion: completion)
                 }
             case .failure(let error):
                 print("error \(error)")

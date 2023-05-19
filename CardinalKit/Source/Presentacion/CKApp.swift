@@ -68,7 +68,7 @@ public class CKApp{
     
     public func reconfigure( options: CKAppOptions) {
          self.options = options
-         self.infrastructure = Infrastructure()
+         ///self.infrastructure = Infrastructure()
      }
 }
 
@@ -261,8 +261,8 @@ extension CKApp{
     /**
      collect data btween two dates using StatistiscCollect from Healkit
      */
-    class public func collectDataWithStatisticCollect(fromDate startDate:Date, toDate endDate: Date, completion: @escaping () -> Void){
-        instance.infrastructure.collectDataWithStatisticCollection(fromDate: startDate, toDate: endDate, completion: completion)
+    class public func collectDataWithStatisticCollect(fromDate startDate:Date, toDate endDate: Date,dateComponentInterval: DateComponents? = nil, completion: @escaping () -> Void){
+        instance.infrastructure.collectDataWithStatisticCollection(fromDate: startDate, toDate: endDate,dateComponentInterval: dateComponentInterval, completion: completion)
     }
     
     /**
