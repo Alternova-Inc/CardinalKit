@@ -9,7 +9,7 @@ import Foundation
 import HealthKit
 
 protocol OpenMHSerializer {
-    func json(for sample: [HKSample]) throws -> [[String: Any]]
+    func json(for sample: [HKSample], for isJoinData: Bool) throws -> [[String: Any]]
 }
 
 // Transform the healthkit data into a json with the openMHealth format
@@ -21,7 +21,7 @@ class CKOpenMHSerializer: OpenMHSerializer{
     /**
      receives an array of samples from healthkit HkSample and returns a json in openMhealth format
      */
-    func json(for data: [HKSample]) throws -> [[String: Any]]{
+    func json(for data: [HKSample], for isJoinData:Bool) throws -> [[String: Any]]{
         
         let encoder = JSONEncoder()
         encoder.dateEncodingStrategy = .iso8601
@@ -33,26 +33,29 @@ class CKOpenMHSerializer: OpenMHSerializer{
             return sampleInObject!
         })
         
-        return JoinData(data: samplesArray)
+        return JoinData(data: samplesArray, isJoinData: isJoinData)
         
     }
     
     //Join data of the same type to send fewer records
-    func JoinData(data: [[String: Any]])->[[String: Any]]{
+    func JoinData(data: [[String: Any]], isJoinData:Bool)->[[String: Any]]{
         let firstElement = data.first
-        if let element = firstElement,
-           let body = element["body"] as? [String: Any]
-        {
-            if let quantityType = body["quantity_type"] as? String{
-                switch(quantityType){
-                case "HKQuantityTypeIdentifierStepCount":
-                    return joinDataStepCount(data: data)
-                case "HKQuantityTypeIdentifierActiveEnergyBurned":
-                    return joinDataEnergyBurned(data: data)
-                default:
-                    return data
+        if isJoinData {
+            if let element = firstElement,
+               let body = element["body"] as? [String: Any]
+            {
+                if let quantityType = body["quantity_type"] as? String{
+                    switch(quantityType){
+                    case "HKQuantityTypeIdentifierStepCount":
+                        return joinDataStepCount(data: data)
+                    case "HKQuantityTypeIdentifierActiveEnergyBurned":
+                        return joinDataEnergyBurned(data: data)
+                    default:
+                        return data
+                    }
                 }
             }
+            return data
         }
         return data
     }

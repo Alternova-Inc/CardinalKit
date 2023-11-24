@@ -61,6 +61,27 @@ internal class Infrastructure {
         }
     }
     
+    func startBackgroundCollectDataTemporal(fromDate startDate:Date){
+        healthPermissionProvider.getHealthPermissions{ result in
+            switch result{
+            case .success(let success):
+                if success {
+                    self.healthKitManager.setUpBackgroundCollectionTest(fromDate: startDate)
+                }
+            case .failure(let error):
+                print("error \(error)")
+            }
+        }
+    }
+    
+    func saveTemporalBackgroundCollectData(){
+        self.healthKitManager.saveTemporalHKSampleData()
+    }
+    
+    func deleteTemporalBackgroundCollectData(){
+        self.healthKitManager.deleteTemporalHKSampleData()
+    }
+    
     // start healthkit data collection in the background using Statistics Collection
     func startBackgroundDeliveryDataWithStatisticCollection(){
         healthPermissionProvider.getHealthPermissions{ result in
@@ -127,7 +148,7 @@ internal class Infrastructure {
     func onHealthDataColected(data:[HKSample], onCompletion:@escaping ()->Void){
         do{
             // Transfom Data in OPENMHealth Format
-            let samplesArray:[[String: Any]] = try mhSerializer.json(for: data)
+            let samplesArray:[[String: Any]] = try mhSerializer.json(for: data, for: false)
             for sample in samplesArray{
                 
                 var identifier = "HKData"
@@ -158,7 +179,7 @@ internal class Infrastructure {
             }
             
             // Transfom Data in OPENMHealth Format
-            let samplesArray:[[String: Any]] = try mhSerializer.json(for: data)
+            let samplesArray:[[String: Any]] = try mhSerializer.json(for: data, for: true)
             for sample in samplesArray{
                 
                 

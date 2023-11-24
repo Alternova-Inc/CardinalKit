@@ -15,6 +15,8 @@ public class HealthKitManager{
     lazy var healthStore: HKHealthStore = HKHealthStore()
     var types:Set<HKSampleType> = Set([])
     var clinicalTypes:Set<HKSampleType> = Set([])
+    var temporalHKSamples = [HKSample]()
+    var anchor = HKQueryAnchor(fromValue: Int(HKAnchoredObjectQueryNoAnchor))
     
     private let healthKitQueue = DispatchQueue(label: "com.slocumfoundation.healthkit", qos: .utility)
     
@@ -60,6 +62,10 @@ public class HealthKitManager{
         }
     }
     
+    func setUpBackgroundCollectionTest( fromDate startDate:Date){
+        self.setUpBackgroundCollectionTest(forTypes: types.isEmpty ? defaultTypes() : types, fromDate: startDate)
+    }
+    
     /**
      start healthkit data collection between specific pair of dates
      - Parameter startDate: initial date
@@ -102,11 +108,11 @@ extension HealthKitManager{
             healthStore.execute(query)
         }
     }
-
+    
     
     private func setUpCollectionBetweenDatesWithStatisticCollection(fromDate startDate: Date, toDate endDate: Date?,dateComponentInterval: DateComponents? = nil, forTypes types: Set<HKSampleType>, completion: @escaping () -> Void) {
         let dispatchGroup = DispatchGroup()
-
+        
         for type in types {
             dispatchGroup.enter()
             healthKitQueue.async { [self] in
@@ -120,13 +126,13 @@ extension HealthKitManager{
             print("Completion Collection With Statistic Query")
         }
     }
-
+    
     
     private func setUpCollectionByDayBetweenDates(fromDate startDate:Date, toDate endDate:Date?, forTypes types:Set<HKSampleType>, completion: @escaping () -> Void){
         var copyTypes = types
         let element = copyTypes.removeFirst()
         
-        getSources(forType: element, startDate: startDate){(sources) in
+        getSources(forType: element, startDate: startDate, endDate: endDate){(sources) in
             let dispatchGroup = DispatchGroup()
             dispatchGroup.enter()
             
@@ -186,6 +192,26 @@ extension HealthKitManager{
             }
             onCompletion?(success,error)
         })
+    }
+    
+    public func setUpBackgroundCollectionTest(forTypes types:Set<HKSampleType>, fromDate startDate:Date, onCompletion:((_ success: Bool, _ error: Error?) -> Void)? = nil){
+        for sampleType in types {
+            let query = HKObserverQuery(sampleType: sampleType, predicate: nil) { [weak self] query, completionHandler, error in
+                guard let strongSelf = self else { return }
+                
+                if error != nil {
+                    completionHandler()
+                    return
+                }
+                print("Collecting data for type \(sampleType.identifier)")
+                strongSelf.collectDataTest(sampleType: sampleType, fromDate: startDate)
+                
+                completionHandler()
+            }
+            
+            healthStore.execute(query)
+        }
+        
     }
     
     private func setUpBackgroundCollectionWithStatisticCollection(withFrequency frequency:HKUpdateFrequency, forTypes types:Set<HKSampleType>, onCompletion:((_ success: Bool, _ error: Error?) -> Void)? = nil){
@@ -263,6 +289,24 @@ extension HealthKitManager{
             }
         }
     }
+    
+    private func collectDataTest(sampleType: HKSampleType, fromDate startDate:Date) {
+        
+        let predicate = HKQuery.predicateForSamples(withStart: startDate, end: nil, options: .strictStartDate)
+        
+        let query = HKAnchoredObjectQuery(type: sampleType, predicate: predicate, anchor: anchor, limit: HKObjectQueryNoLimit) { [weak self] query, addedSamples, deletedSamples, newAnchor, error in
+
+            guard let strongSelf = self else { return }
+
+            if let samples = addedSamples {
+                strongSelf.temporalHKSamples.append(contentsOf: samples)
+            }
+
+            strongSelf.anchor = newAnchor ?? strongSelf.anchor
+        }
+
+        healthStore.execute(query)
+    }
 
     
     private func collectData(forType type:HKSampleType, fromDate startDate: Date? = nil, toDate endDate:Date,dateComponentInterval: DateComponents? = nil, onCompletion:@escaping ()->Void ){
@@ -306,6 +350,8 @@ extension HealthKitManager{
         }
     }
     
+    
+    
     private func convertStatisticsToHKSamples(statisticsCollection statistics : HKStatisticsCollection, quantityType:HKQuantityType, fromDate startDate: Date? = nil, toDate endDate:Date, onCompletion:@escaping ([HKSample])-> Void){
 
         var samples : [HKSample] = []
@@ -341,8 +387,10 @@ extension HealthKitManager{
         }
     }
     
-    fileprivate func getSources(forType type: HKSampleType, startDate: Date , onCompletion: @escaping ((Set<HKSource>)->Void)) {
-        let datePredicate = HKQuery.predicateForSamples(withStart: startDate , end: Date(), options: .strictStartDate)
+    fileprivate func getSources(forType type: HKSampleType, startDate: Date, endDate: Date? = nil, onCompletion: @escaping ((Set<HKSource>)->Void)) {
+        let actualEndDate = endDate ?? Date()
+        let datePredicate = HKQuery.predicateForSamples(withStart: startDate, end: actualEndDate, options: .strictStartDate)
+        
         let query = HKSourceQuery(sampleType: type, samplePredicate: datePredicate) {
             query, sources, error in
             if let error = error {
@@ -356,7 +404,7 @@ extension HealthKitManager{
         }
         healthStore.execute(query)
     }
-    
+
     fileprivate func queryHealthStore(forType type: HKSampleType, forSource sourceRevision: HKSourceRevision, fromDate startDate: Date, toDate endDate: Date, queryHandler: @escaping (HKSampleQuery, [HKSample]?, Error?) -> Void) {
         
         let sortDescriptor = NSSortDescriptor(key: HKSampleSortIdentifierStartDate, ascending: true)
@@ -418,5 +466,16 @@ extension HealthKitManager{
     
     fileprivate func getSourceRevisionKey(source: HKSourceRevision) -> String {
         return "\(source.productType ?? "UnknownDevice") \(source.source.key)"
+    }
+    
+    public func saveTemporalHKSampleData(){
+        CKApp.instance.infrastructure.onHealthDataColected(data: temporalHKSamples){
+            print("Complete Register Data")
+            self.temporalHKSamples.removeAll()
+        }
+    }
+    
+    public func deleteTemporalHKSampleData(){
+        self.temporalHKSamples.removeAll()
     }
 }

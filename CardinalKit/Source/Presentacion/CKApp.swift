@@ -231,6 +231,27 @@ extension CKApp{
     }
     
     /**
+     start background data collection
+     */
+    class public func startBackgroundCollectDataTemporal(fromDate startDate:Date){
+        instance.infrastructure.startBackgroundCollectDataTemporal(fromDate: startDate)
+    }
+    
+    /**
+     save background temporal data collection
+     */
+    class public func saveTemporalBackgroundCollectData(){
+        instance.infrastructure.saveTemporalBackgroundCollectData()
+    }
+    
+    /**
+     detele background temporal data collection
+     */
+    class public func deleteTemporalBackgroundCollectData(){
+        instance.infrastructure.deleteTemporalBackgroundCollectData()
+    }
+    
+    /**
      collect data between two specific dates
      */
     class public func collectData(fromDate startDate:Date, toDate endDate: Date, completion: @escaping () -> Void){
